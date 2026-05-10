@@ -1,5 +1,3 @@
-import asyncio
-
 from src.core.settings import settings
 from nautilus_trader.live.node import (
   TradingNode, 
@@ -13,19 +11,42 @@ from nautilus_trader.adapters.polymarket.factories import (
   PolymarketLiveDataClientFactory,
   PolymarketLiveExecClientFactory,
 )
+from nautilus_trader.adapters.polymarket.providers import (
+  PolymarketInstrumentProviderConfig,
+)
 
 
-async def main() -> None:
+def main() -> None:
   """
   This function is the main entry point to the application.
   """
   # Load the env variables from the .env file
   settings.NODE_CONFIG.inject_to_env()
 
+  # ---- Instrument Provider Configurations ----------
+
+  instrument_provider_config = PolymarketInstrumentProviderConfig(
+    load_all=True,
+    event_slug_builder=settings.NODE_CONFIG.SLUG_BUILDER_PATH
+  )
+
+
+  # ---- Data Client Configurations ------------------
+
+  data_client_config = PolymarketDataClientConfig(
+    instrument_config=instrument_provider_config
+  )
+
+
+  # ---- Execution Client Configurations -------------
+
+  exec_client_config = PolymarketExecClientConfig(
+    instrument_config=instrument_provider_config
+  )
+
+
   # ---- Client Configurations ----------------------
 
-  data_client_config = PolymarketDataClientConfig()
-  exec_client_config = PolymarketExecClientConfig()
   node_config = TradingNodeConfig(
     trader_id=settings.NODE_CONFIG.TRADER_ID,
     environment=settings.NODE_CONFIG.ENVIRONMENT,
@@ -37,7 +58,8 @@ async def main() -> None:
     },
   )
 
-  # ---- Engine Setup And Execution------------------
+
+  # ---- Engine Setup And Execution -----------------
 
   node = TradingNode(
     config=node_config
@@ -56,4 +78,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-  asyncio.run(main())
+  main()
