@@ -18,8 +18,8 @@ class NodeConfig(BaseSettings):
     env_prefix="POLYMARKET_"
   )
 
-  TRADER_ID: str = "weather-trader"
-  CLIENT_NAME: str = "weather-trader-client"
+  TRADER_ID: str = "WEATHER-TRADER"
+  CLIENT_NAME: str = "WEATHER"
   ENVIRONMENT: Environment = Environment.SANDBOX
 
   # ---- Polymarket API Credentials ----------------------
@@ -30,7 +30,7 @@ class NodeConfig(BaseSettings):
   API_SECRET: SecretStr = Field(
     description="The API secret used for authentication when making Polymarket API calls."
   )
-  API_PASSPHRASE: SecretStr = Field(
+  PASSPHRASE: SecretStr = Field(
     description="The API passphrase used for authentication when making Polymarket API calls."
   )
 
