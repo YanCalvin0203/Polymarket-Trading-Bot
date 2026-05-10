@@ -25,23 +25,23 @@ def main() -> None:
 
   # ---- Instrument Provider Configurations ----------
 
-  instrument_provider_config = PolymarketInstrumentProviderConfig(
+  weather_instrument_provider_config = PolymarketInstrumentProviderConfig(
     load_all=True,
-    event_slug_builder=settings.NODE_CONFIG.SLUG_BUILDER_PATH
+    event_slug_builder=settings.NODE_CONFIG.WEATHER_SLUG_BUILDER_PATH
   )
 
 
   # ---- Data Client Configurations ------------------
 
-  data_client_config = PolymarketDataClientConfig(
-    instrument_config=instrument_provider_config
+  weather_data_client_config = PolymarketDataClientConfig(
+    instrument_config=weather_instrument_provider_config
   )
 
 
   # ---- Execution Client Configurations -------------
 
-  exec_client_config = PolymarketExecClientConfig(
-    instrument_config=instrument_provider_config
+  weather_exec_client_config = PolymarketExecClientConfig(
+    instrument_config=weather_instrument_provider_config
   )
 
 
@@ -51,10 +51,10 @@ def main() -> None:
     trader_id=settings.NODE_CONFIG.TRADER_ID,
     environment=settings.NODE_CONFIG.ENVIRONMENT,
     data_clients={
-      settings.NODE_CONFIG.CLIENT_NAME: data_client_config
+      settings.NODE_CONFIG.WEATHER_CLIENT_NAME: weather_data_client_config
     },
     exec_clients={
-      settings.NODE_CONFIG.CLIENT_NAME: exec_client_config
+      settings.NODE_CONFIG.WEATHER_CLIENT_NAME: weather_exec_client_config
     },
   )
 
@@ -65,11 +65,11 @@ def main() -> None:
     config=node_config
   )
   node.add_data_client_factory(
-    name=settings.NODE_CONFIG.CLIENT_NAME, 
+    name=settings.NODE_CONFIG.WEATHER_CLIENT_NAME, 
     factory=PolymarketLiveDataClientFactory
   )
   node.add_exec_client_factory(
-    name=settings.NODE_CONFIG.CLIENT_NAME,
+    name=settings.NODE_CONFIG.WEATHER_CLIENT_NAME,
     factory=PolymarketLiveExecClientFactory
   )
 

@@ -14,8 +14,8 @@ def weather_slug_builder() -> list[str]:
   slugs = []
   today = datetime.now(tz=UTC).date()
 
-  cities = settings.SLUG_BUILDER_CONFIG.CITIES
-  time_range = settings.SLUG_BUILDER_CONFIG.TIME_RANGE
+  cities = settings.WEATHER_SLUG_BUILDER_CONFIG.CITIES
+  time_range = settings.WEATHER_SLUG_BUILDER_CONFIG.TIME_RANGE
 
   for city in cities:
     for i in range(time_range):

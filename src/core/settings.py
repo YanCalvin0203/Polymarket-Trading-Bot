@@ -19,10 +19,10 @@ class NodeConfig(BaseSettings):
   )
 
   TRADER_ID: str = "WEATHER-TRADER"
-  CLIENT_NAME: str = "WEATHER"
   ENVIRONMENT: Environment = Environment.SANDBOX
 
-  SLUG_BUILDER_PATH: str = "src.utils.slug_builder:weather_slug_builder"
+  WEATHER_CLIENT_NAME: str = "WEATHER"
+  WEATHER_SLUG_BUILDER_PATH: str = "src.utils.slug_builder:weather_slug_builder"
 
   # ---- Polymarket API Credentials ----------------------
 
@@ -62,7 +62,7 @@ class NodeConfig(BaseSettings):
       os.environ[env_key] = env_value
 
   
-class SlugBuilderConfig:
+class WeatherSlugBuilderConfig:
   """
   This class contains all the configuration variables for the weather scanner.
   """
@@ -78,7 +78,7 @@ class MainSettings(BaseSettings):
   the program.
   """
   NODE_CONFIG: NodeConfig = NodeConfig()
-  SLUG_BUILDER_CONFIG: SlugBuilderConfig = SlugBuilderConfig()
+  WEATHER_SLUG_BUILDER_CONFIG: WeatherSlugBuilderConfig = WeatherSlugBuilderConfig()
 
 
 # ---- Public API -------------------------------------
