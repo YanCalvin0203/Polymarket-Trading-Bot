@@ -1,6 +1,11 @@
-def main():
-    print("Hello from capybara!")
+import asyncio
+
+from src.core.settings import settings
+
+
+async def main():
+  settings.NODE_CONFIG.inject_to_env()
 
 
 if __name__ == "__main__":
-    main()
+  asyncio.run(main())
