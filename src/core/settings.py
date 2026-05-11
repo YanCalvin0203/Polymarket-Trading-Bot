@@ -24,6 +24,9 @@ class NodeConfig(BaseSettings):
   WEATHER_CLIENT_NAME: str = "WEATHER"
   WEATHER_SLUG_BUILDER_PATH: str = "src.utils.slug_builder:weather_slug_builder"
 
+  WEATHER_STRATEGY_PATH: str = "src.strategies.weather_strategy:WeatherStrategy"
+  WEATHER_STRATEGY_CONFIG_PATH: str = "src.strategies.weather_strategy:WeatherStrategyConfig"
+
   # ---- Polymarket API Credentials ----------------------
 
   API_KEY: str = Field(
@@ -67,7 +70,7 @@ class WeatherSlugBuilderConfig:
   This class contains all the configuration variables for the weather scanner.
   """
   TIME_RANGE: int = 3
-  CITIES: list[str] = ["nyc", "los-angeles", "chicago"]
+  CITIES: list[str] = ["nyc"]
 
 
 # ---- Public API Configuration -----------------------
