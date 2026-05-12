@@ -11,7 +11,8 @@ from src.models.weather_model import (
   WeatherEventModel,
   WeatherMarketModel, 
   LocationModel, 
-  WeatherForecastModel
+  WeatherForecastModel,
+  WeatherObservationModel
 )
 from src.models.pricing_mode import PricingModel
 from src.core.enums import TemperatureUnit
@@ -126,6 +127,11 @@ class WeatherParser:
       forecast_stdev=0.0,
       last_updated=Timestamp.now(tz="UTC")
     )
+    observation_model = WeatherObservationModel(
+      observation_current=0.0,
+      observation_max=0.0,
+      last_updated=Timestamp.now(tz="UTC")
+    )
 
     event_model = WeatherEventModel(
       # ---- Base attributes ---------------------------------
@@ -138,6 +144,7 @@ class WeatherParser:
       resolution_time=self._parse_resolution_time(raw_instrument),
       resolution_source=raw_instrument.get("resolutionSource", None),
       forecast=forecast_model,
+      observation=observation_model
     )
 
     if not self._is_event_valid(event_model):

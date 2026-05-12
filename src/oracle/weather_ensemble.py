@@ -1,13 +1,17 @@
 import time 
 
 from typing import Any
+from datetime import timezone
 from retry_requests import retry
 from openmeteo_requests import Client
 from openmeteo_sdk.WeatherApiResponse import WeatherApiResponse
 from numpy import array
 from pandas import DataFrame, Timestamp, Timedelta, date_range
 from src.core.settings import settings
-from src.models.weather_model import WeatherEventModel, WeatherForecastModel
+from src.models.weather_model import (
+  WeatherEventModel,
+  WeatherForecastModel
+)
 
 
 class WeatherEnsemble:
@@ -65,11 +69,11 @@ class WeatherEnsemble:
       forecast_mean, forecast_stdev = self._get_forecast_stats(
         response=response,
         event=event
-      )                                                                                                                                           
+      )
       forecast_model = WeatherForecastModel(
         forecast_mean=forecast_mean,
         forecast_stdev=forecast_stdev,
-        last_updated=Timestamp.now(tz="UTC")
+        last_updated=Timestamp.now(tz=timezone.utc)
       )
       return forecast_model
     
@@ -138,8 +142,8 @@ class WeatherEnsemble:
 
     # Calculate the timestamps (localized) for the dataframe index
     timestamps = date_range(
-      start=Timestamp(hourly.Time(), unit="s", tz="UTC"),
-      end=Timestamp(hourly.TimeEnd(), unit="s", tz="UTC"),
+      start=Timestamp(hourly.Time(), unit="s", tz=timezone.utc),
+      end=Timestamp(hourly.TimeEnd(), unit="s", tz=timezone.utc),
       freq=Timedelta(seconds=hourly.Interval()),
       inclusive="left"
     )   

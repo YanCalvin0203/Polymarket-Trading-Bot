@@ -88,8 +88,12 @@ class WeatherOracleSettings:
   }
   ENSEMBLE_COUNT: int = 51
 
-  ENSEMBLE_CACHE_NAME: str = "data/ensemble_cache"
-  ENSEMBLE_CACHE_EXPIRE_AFTER: int = 3600
+  # ---- Observation -------------------------------------
+
+  METAR_ENDPOINT: str = "https://aviationweather.gov/api/data/metar"
+  METAR_QUERY_PARAMS: dict[str, Any] = {
+    "format": "json"
+  }
 
   # ---- HTTP --------------------------------------------
 
@@ -97,6 +101,7 @@ class WeatherOracleSettings:
   RETRY_BACKOFF_FACTOR: float = 0.2
 
   REQUEST_DELAY: float = 0.01
+  REQUEST_TIMEOUT: int = 10
 
 
 
