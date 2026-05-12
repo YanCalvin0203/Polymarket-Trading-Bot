@@ -7,6 +7,9 @@ requires-python = ">=3.14"
 dependencies = [
     "airportsdata>=20260315",
     "nautilus-trader[polymarket]>=1.226.0",
+    "openmeteo-requests>=1.7.5",
+    "pandas>=2.3.3",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.1",
+    "retry-requests>=2.0.0",
 ]

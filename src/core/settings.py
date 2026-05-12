@@ -1,5 +1,6 @@
 import os
 
+from typing import Any
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from nautilus_trader.common import Environment
@@ -73,16 +74,42 @@ class WeatherSlugBuilderConfig:
   CITIES: list[str] = ["nyc"]
 
 
-# ---- Public API Configuration -----------------------
+class WeatherOracleSettings:
+  """
+  This class contains all the configuration variables for the oracle.
+  """
+  # ---- Ensemble ----------------------------------------
+
+  ENSEMBLE_ENDPOINT: str = "https://ensemble-api.open-meteo.com/v1/ensemble"
+  ENSEMBLE_QUERY_PARAMS: dict[str, Any] = {
+    "hourly": ["temperature_2m"],
+    "models": "ecmwf_ifs025",
+    "timezone": "auto"
+  }
+  ENSEMBLE_COUNT: int = 51
+
+  ENSEMBLE_CACHE_NAME: str = "data/ensemble_cache"
+  ENSEMBLE_CACHE_EXPIRE_AFTER: int = 3600
+
+  # ---- HTTP --------------------------------------------
+
+  RETRY_RETRIES: int = 3
+  RETRY_BACKOFF_FACTOR: float = 0.2
+
+  REQUEST_DELAY: float = 0.01
+
+
+
+# ---- Public API Configuration --------------------------
 
 class MainSettings(BaseSettings):
   """
   This class loads the env variables and program specific parameters for 
   the program.
   """
-  NODE_CONFIG: NodeConfig = NodeConfig()
+  NODE_CONFIG: NodeConfig                               = NodeConfig()
   WEATHER_SLUG_BUILDER_CONFIG: WeatherSlugBuilderConfig = WeatherSlugBuilderConfig()
-
+  WEATHER_ORACLE_SETTINGS: WeatherOracleSettings        = WeatherOracleSettings()
 
 # ---- Public API -------------------------------------
 

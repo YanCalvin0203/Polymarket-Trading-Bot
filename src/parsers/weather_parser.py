@@ -1,18 +1,20 @@
 import re
 import json
 from enum import Enum
-from venv import logger
 import airportsdata
 
 from typing import Any
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from pandas import Timestamp
 from src.models.weather_model import (
   WeatherEventModel,
   WeatherMarketModel, 
   LocationModel, 
-  PricingModel
+  WeatherForecastModel
 )
+from src.models.pricing_mode import PricingModel
+from src.core.enums import TemperatureUnit
 
 
 # --- Constants ----------------------------------
@@ -119,6 +121,12 @@ class WeatherParser:
       longitude=longitude
     )
 
+    forecast_model = WeatherForecastModel(
+      forecast_mean=0.0,
+      forecast_stdev=0.0,
+      last_updated=Timestamp.now(tz="UTC")
+    )
+
     event_model = WeatherEventModel(
       # ---- Base attributes ---------------------------------
       event_id=instrument_data.get("neg_risk_market_id", ""),
@@ -129,6 +137,7 @@ class WeatherParser:
       temperature_unit=self._parse_temperature_unit(raw_instrument),
       resolution_time=self._parse_resolution_time(raw_instrument),
       resolution_source=raw_instrument.get("resolutionSource", None),
+      forecast=forecast_model,
     )
 
     if not self._is_event_valid(event_model):
@@ -173,7 +182,6 @@ class WeatherParser:
 
       # ---- Weather specific attributes ---------------------
       bucket_range=self._parse_bucket_range(raw_instrument),
-      probability=None,
 
       # ---- Raw market data --------------------------------
       market_data=raw_instrument
@@ -404,7 +412,7 @@ class WeatherParser:
 
     return (lower_bound, upper_bound)
 
-  def _parse_temperature_unit(self, raw_instrument: dict[str, Any]) -> str | None:
+  def _parse_temperature_unit(self, raw_instrument: dict[str, Any]) -> TemperatureUnit | None:
     """
     This function parses the temperature unit from the raw instrument data.
 
@@ -414,7 +422,7 @@ class WeatherParser:
 
     Returns
     --------------
-    str | None: The parsed temperature unit or None if not found.
+    TemperatureUnit | None: The parsed temperature unit enum or None if not found.
     """
     temperature_str = raw_instrument.get("groupItemTitle", "")
     if temperature_str == "":
@@ -424,7 +432,12 @@ class WeatherParser:
     if unit_match is None:
       return None
     
-    return unit_match.group("unit").upper()
+    temperature_unit = unit_match.group("unit").upper()
+    try:
+      return TemperatureUnit(temperature_unit)
+    
+    except ValueError:
+      return None
   
   def _parse_token_ids(self, raw_instrument: dict[str, Any]) -> tuple[int | None, int | None]:
     """
