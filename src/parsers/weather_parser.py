@@ -1,31 +1,26 @@
 import re
 import json
-from enum import Enum
 import airportsdata
 
 from typing import Any
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from pandas import Timestamp
-from src.models.weather_model import (
-  WeatherEventModel,
-  WeatherMarketModel, 
+from src.models.common.pricing_mode import PricingModel
+from src.models.weather.manifest import WeatherManifestModel
+from src.models.weather.components import (
   LocationModel, 
   WeatherForecastModel,
   WeatherObservationModel
 )
-from src.models.pricing_mode import PricingModel
-from src.core.enums import TemperatureUnit
-
-
-# --- Constants ----------------------------------
-
-class TemperatureQualifier(Enum):
-  """
-  This enum defines the possible qualifiers for temperature buckets.
-  """
-  OR_BELOW = "or below"
-  OR_HIGHER = "or higher"
+from src.models.weather.events import (
+  WeatherEventModel,
+  WeatherMarketModel
+)
+from src.core.enums import (
+  TemperatureUnit, 
+  TemperatureQualifier
+)
 
 
 # ---- Regex Patterns ----------------------------------
@@ -94,7 +89,28 @@ class WeatherParser:
 
     return events
 
+  def parse_manifests(self, events_dict: dict[str, WeatherEventModel]) -> dict[str, WeatherManifestModel]:
+    """
+    This function parses event models into a dictionary of structured manifest data.
 
+    Parameters
+    --------------
+    events_dict (dict[str, WeatherEventModel]): The dictionary of event models to parse manifests for.
+
+    Returns
+    --------------
+    dict[str, WeatherManifestModel]: The parsed and structured dictionary of manifest data.
+    """
+    manifest = {}
+    for event_id, event_model in events_dict.items():
+      manifest_model = self._parse_single_manifest(event_model)
+      if manifest_model is None:
+        continue 
+
+      manifest[event_id] = manifest_model
+
+    return manifest
+  
   # ---- Internal Helpers ----------------------------
 
   def _parse_single_event(self, instrument_data: dict[str, Any]) -> WeatherEventModel | None:
@@ -199,6 +215,52 @@ class WeatherParser:
     
     return market_model
   
+  def _parse_single_manifest(self, event_model: WeatherEventModel) -> WeatherManifestModel | None:
+    """
+    This function parses a single event model into a structured manifest format.
+
+    Parameters
+    --------------
+    event_model (WeatherEventModel): The event model.
+
+    Returns
+    --------------
+    WeatherManifestModel | None: The parsed and structured manifest data, or None if parsing fails.
+    """
+    manifest_model = WeatherManifestModel(
+      location=event_model.location,
+      temperature_unit=event_model.temperature_unit,
+      resolution_time=event_model.resolution_time,
+    )
+
+    if not self.is_manifest_valid(manifest_model):
+      return None
+
+    return manifest_model
+  
+  def _is_location_valid(self, location_model: LocationModel) -> bool:
+    """
+    This function checks if a parsed location model is valid.
+
+    Parameters
+    --------------
+    location_model (LocationModel): The parsed location model to validate.
+
+    Returns
+    --------------
+    bool: True if the location model is valid, False otherwise.
+    """
+    if location_model.city_name == "" or location_model.icao_code == "":
+      return False
+    
+    if location_model.latitude is None or location_model.longitude is None:
+      return False
+    
+    if location_model.timezone == "":
+      return False
+
+    return True
+  
   def _is_event_valid(self, event_model: WeatherEventModel) -> bool:
     """
     This function checks if a parsed event model is valid to be traded.
@@ -217,13 +279,7 @@ class WeatherParser:
     if event_model.resolution_time is None or event_model.resolution_source is None:
       return False
     
-    if event_model.location.city_name == "" or event_model.location.icao_code == "":
-      return False
-    
-    if event_model.location.latitude is None or event_model.location.longitude is None:
-      return False
-    
-    if event_model.location.timezone == "":
+    if not self._is_location_valid(event_model.location):
       return False
 
     return True
@@ -244,6 +300,26 @@ class WeatherParser:
       return False
     
     if market_model.yes_token_id is None or market_model.no_token_id is None:
+      return False
+
+    return True
+  
+  def is_manifest_valid(self, manifest_model: WeatherManifestModel) -> bool:
+    """
+    This function checks if a parsed manifest model is valid to be used.
+
+    Parameters
+    --------------
+    manifest_model (WeatherManifestModel): The parsed manifest model to validate.
+
+    Returns
+    --------------
+    bool: True if the manifest model is valid, False otherwise.
+    """
+    if manifest_model.temperature_unit is None or manifest_model.resolution_time is None:
+      return False
+    
+    if not self._is_location_valid(manifest_model.location):
       return False
 
     return True

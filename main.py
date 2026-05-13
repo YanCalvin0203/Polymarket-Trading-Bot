@@ -2,6 +2,7 @@ from src.core.settings import settings
 from nautilus_trader.live.node import TradingNode
 from nautilus_trader.live.config import TradingNodeConfig
 from nautilus_trader.trading.config import ImportableStrategyConfig
+from nautilus_trader.common.config import ImportableActorConfig
 from nautilus_trader.adapters.polymarket.config import (
   PolymarketDataClientConfig,
   PolymarketExecClientConfig,
@@ -53,7 +54,15 @@ def main() -> None:
   )
 
 
-  # ---- Client Configurations -----------------------
+  # ---- Actor Configurations -----------------------
+  
+  weather_state_actor_config = ImportableActorConfig(
+    actor_path=settings.NODE_CONFIG.WEATHER_STATE_ACTOR_PATH,
+    config_path=settings.NODE_CONFIG.WEATHER_STATE_ACTOR_CONFIG_PATH,
+    config={}
+  )
+
+  # ---- Client Configurations ----------------------
 
   node_config = TradingNodeConfig(
     trader_id=settings.NODE_CONFIG.TRADER_ID,
@@ -66,6 +75,9 @@ def main() -> None:
     },
     strategies=[
       weather_strategy_config
+    ],
+    actors=[
+      weather_state_actor_config
     ]
   )
 

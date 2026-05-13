@@ -1,90 +1,13 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
-from src.models.pricing_mode import PricingModel
+from src.models.common.pricing_mode import PricingModel
 from src.core.enums import TemperatureUnit
-
-
-@dataclass(slots=True)
-class WeatherForecastModel:
-  forecast_mean: float
-  forecast_stdev: float
-  last_updated: datetime
-
-
-  # ---- Public API -------------------------------------
-
-  def __str__(self) -> str:
-    """
-    This functions returns a string representation of the WeatherForecastModel 
-    instance.
-
-    Returns
-    --------------
-    str: The string representation of the WeatherForecastModel instance.
-    """
-    return (
-      f"---- Weather Forecast Model ----------------------\n"
-      f"forecast_mean:  {self.forecast_mean},\n"
-      f"forecast_stdev:  {self.forecast_stdev},\n"
-      f"last_updated:   {self.last_updated}\n"
-    )
-  
-
-@dataclass(slots=True)
-class WeatherObservationModel:
-  observation_current: float
-  observation_max: float
-  last_updated: datetime
-
-
-  # ---- Public API -------------------------------------
-
-  def __str__(self) -> str:
-    """
-    This functions returns a string representation of the WeatherObservationModel 
-    instance.
-
-    Returns
-    --------------
-    str: The string representation of the WeatherObservationModel instance.
-    """
-    return (
-      f"---- Weather Observation Model -------------------\n"
-      f"observation_current: {self.observation_current},\n"
-      f"observation_max:     {self.observation_max},\n"
-      f"last_updated:        {self.last_updated}\n"
-    )
-
-
-@dataclass(frozen=True, slots=True)
-class LocationModel:
-  city_name: str
-  icao_code: str
-  timezone: str
-  latitude: float
-  longitude: float
-
-
-  # ---- Public API -------------------------------------
-
-  def __str__(self) -> str:
-    """
-    This functions returns a string representation of the LocationModel 
-    instance.
-
-    Returns
-    --------------
-    str: The string representation of the LocationModel instance.
-    """
-    return (
-      f"---- Location Model -------------------------\n"
-      f"city_name:  {self.city_name},\n"
-      f"icao_code:  {self.icao_code},\n"
-      f"timezone:   {self.timezone},\n"
-      f"latitude:   {self.latitude},\n"
-      f"longitude:  {self.longitude}\n"
-    )
+from src.models.weather.components import (
+  WeatherForecastModel,
+  WeatherObservationModel,
+  LocationModel,
+)
 
 
 @dataclass(slots=True)
@@ -92,7 +15,6 @@ class WeatherEventModel:
   # ---- Base attributes ---------------------------------
   event_id: str
   markets: dict[str, 'WeatherMarketModel']
-
 
   # ---- Weather specific attributes ---------------------
   location: LocationModel
@@ -104,12 +26,11 @@ class WeatherEventModel:
   forecast: WeatherForecastModel
   observation: WeatherObservationModel
 
-
   # ---- Public API -------------------------------------
 
   def __str__(self) -> str:
     """
-    This functions returns a string representation of the WeatherEventModel 
+    This functions returns a string representation of the WeatherEventModel s
     instance.
 
     Returns
@@ -148,10 +69,8 @@ class WeatherMarketModel:
   no_token_id: str
   prices: PricingModel
 
-
   # ---- Weather specific attributes ---------------------
   bucket_range: tuple[float, float]
-
 
   # ---- Raw market data ---------------------------------
   market_data: dict[str, Any]

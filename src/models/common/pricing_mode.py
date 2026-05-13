@@ -8,7 +8,6 @@ class PricingModel:
   best_yes_bid: float
   best_no_bid: float
 
-
   # ---- Public API -------------------------------------
 
   def __str__(self) -> str:

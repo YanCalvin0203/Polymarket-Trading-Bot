@@ -1,6 +1,9 @@
 from enum import Enum
 
 class TemperatureUnit(Enum):
+  """
+  This enum defines the possible temperature units.
+  """
   CELSIUS = "C"
   FAHRENHEIT = "F"
 
@@ -15,3 +18,11 @@ class TemperatureUnit(Enum):
       TemperatureUnit.FAHRENHEIT: "fahrenheit"
     }
     return mapping[self]
+
+
+class TemperatureQualifier(Enum):
+  """
+  This enum defines the possible qualifiers for temperature buckets.
+  """
+  OR_BELOW = "or below"
+  OR_HIGHER = "or higher"

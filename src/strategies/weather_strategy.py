@@ -1,4 +1,3 @@
-from src.parsers.weather_parser import WeatherParser
 from nautilus_trader.trading.strategy import Strategy
 from nautilus_trader.trading.config import StrategyConfig
 
@@ -24,14 +23,15 @@ class WeatherStrategy(Strategy):
     config (WeatherStrategyConfig): The configuration for the WeatherStrategy.
     """
     super().__init__(config)
-    self.parser = WeatherParser()
+
+
+  # ---- Lifecycle Methods ----------------------------------
 
   def on_start(self) -> None:
     """
     This method is called when the strategy is started.
     """
-    all_instruments = self.cache.instruments()
-    events = self.parser.parse_instruments(all_instruments)
+    pass
 
   def on_stop(self) -> None:
     """

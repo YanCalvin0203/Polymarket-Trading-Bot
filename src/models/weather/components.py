@@ -1,0 +1,81 @@
+from dataclasses import dataclass
+from datetime import datetime
+
+
+@dataclass(slots=True)
+class WeatherForecastModel:
+  forecast_mean: float
+  forecast_stdev: float
+  last_updated: datetime
+
+  # ---- Public API -------------------------------------
+
+  def __str__(self) -> str:
+    """
+    This functions returns a string representation of the WeatherForecastModel 
+    instance.
+
+    Returns
+    --------------
+    str: The string representation of the WeatherForecastModel instance.
+    """
+    return (
+      f"---- Weather Forecast Model ----------------------\n"
+      f"forecast_mean:  {self.forecast_mean},\n"
+      f"forecast_stdev:  {self.forecast_stdev},\n"
+      f"last_updated:   {self.last_updated}\n"
+    )
+  
+
+@dataclass(slots=True)
+class WeatherObservationModel:
+  observation_current: float
+  observation_max: float
+  last_updated: datetime
+
+  # ---- Public API -------------------------------------
+
+  def __str__(self) -> str:
+    """
+    This functions returns a string representation of the WeatherObservationModel 
+    instance.
+
+    Returns
+    --------------
+    str: The string representation of the WeatherObservationModel instance.
+    """
+    return (
+      f"---- Weather Observation Model -------------------\n"
+      f"observation_current: {self.observation_current},\n"
+      f"observation_max:     {self.observation_max},\n"
+      f"last_updated:        {self.last_updated}\n"
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class LocationModel:
+  city_name: str
+  icao_code: str
+  timezone: str
+  latitude: float
+  longitude: float
+
+  # ---- Public API -------------------------------------
+
+  def __str__(self) -> str:
+    """
+    This functions returns a string representation of the LocationModel 
+    instance.
+
+    Returns
+    --------------
+    str: The string representation of the LocationModel instance.
+    """
+    return (
+      f"---- Location Model -------------------------\n"
+      f"city_name:  {self.city_name},\n"
+      f"icao_code:  {self.icao_code},\n"
+      f"timezone:   {self.timezone},\n"
+      f"latitude:   {self.latitude},\n"
+      f"longitude:  {self.longitude}\n"
+    )

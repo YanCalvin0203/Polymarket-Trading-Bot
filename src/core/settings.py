@@ -28,6 +28,9 @@ class NodeConfig(BaseSettings):
   WEATHER_STRATEGY_PATH: str = "src.strategies.weather_strategy:WeatherStrategy"
   WEATHER_STRATEGY_CONFIG_PATH: str = "src.strategies.weather_strategy:WeatherStrategyConfig"
 
+  WEATHER_STATE_ACTOR_PATH: str = "src.actors.weather_state_actor:WeatherStateActor"
+  WEATHER_STATE_ACTOR_CONFIG_PATH: str = "src.actors.weather_state_actor:WeatherStateActorConfig"
+
   # ---- Polymarket API Credentials ----------------------
 
   API_KEY: str = Field(

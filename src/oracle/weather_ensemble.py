@@ -8,10 +8,8 @@ from openmeteo_sdk.WeatherApiResponse import WeatherApiResponse
 from numpy import array
 from pandas import DataFrame, Timestamp, Timedelta, date_range
 from src.core.settings import settings
-from src.models.weather_model import (
-  WeatherEventModel,
-  WeatherForecastModel
-)
+from src.models.weather.events import WeatherEventModel
+from src.models.weather.components import WeatherForecastModel
 
 
 class WeatherEnsemble:
