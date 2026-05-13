@@ -4,9 +4,9 @@ import requests
 from typing import Any
 from datetime import datetime, timezone
 from src.core.settings import settings
-from src.core.enums import TemperatureUnit
+from src.core.enums.weather import TemperatureUnit
 from src.utils.temperature_converter import to_farenheit
-from src.models.weather_model import (
+from src.models.weather import (
   WeatherEventModel,
   WeatherObservationModel,
 )

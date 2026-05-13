@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 from src.models.common.pricing_mode import PricingModel
-from src.core.enums import TemperatureUnit
+from src.core.enums.weather.unit import TemperatureUnit
 from src.models.weather.components import (
   WeatherForecastModel,
   WeatherObservationModel,
