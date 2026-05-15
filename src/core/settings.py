@@ -28,10 +28,12 @@ class NodeConfig(BaseSettings):
   WEATHER_STRATEGY_PATH: str = "src.strategies.weather_strategy:WeatherStrategy"
   WEATHER_STRATEGY_CONFIG_PATH: str = "src.strategies.weather_strategy:WeatherStrategyConfig"
 
-  WEATHER_STATE_ACTOR_PATH: str = "src.actors.weather_state_actor:WeatherStateActor"
-  WEATHER_STATE_ACTOR_CONFIG_PATH: str = "src.actors.weather_state_actor:WeatherStateActorConfig"
-  WEATHER_FORECAST_INGESTOR_ACTOR_PATH: str = "src.actors.weather_forecast_ingestor_actor:WeatherForecastIngestorActor"
-  WEATHER_FORECAST_INGESTOR_ACTOR_CONFIG_PATH: str = "src.actors.weather_forecast_ingestor_actor:WeatherForecastIngestorActorConfig"
+  WEATHER_STATE_ACTOR_PATH: str = "src.actors.weather.state_actor:WeatherStateActor"
+  WEATHER_STATE_ACTOR_CONFIG_PATH: str = "src.actors.weather.state_actor:WeatherStateActorConfig"
+  WEATHER_FORECAST_INGESTOR_ACTOR_PATH: str = "src.actors.weather.forecast_ingestor_actor:WeatherForecastIngestorActor"
+  WEATHER_FORECAST_INGESTOR_ACTOR_CONFIG_PATH: str = "src.actors.weather.forecast_ingestor_actor:WeatherForecastIngestorActorConfig"
+  WEATHER_OBSERVATION_INGESTOR_ACTOR_PATH: str = "src.actors.weather.observation_ingestor_actor:WeatherObservationIngestorActor"
+  WEATHER_OBSERVATION_INGESTOR_ACTOR_CONFIG_PATH: str = "src.actors.weather.observation_ingestor_actor:WeatherObservationIngestorActorConfig"
 
   # ---- Polymarket API Credentials ----------------------
 
@@ -109,7 +111,6 @@ class WeatherOracleSettings:
   REQUEST_TIMEOUT: int = 10
 
 
-
 # ---- Public API Configuration --------------------------
 
 class MainSettings(BaseSettings):
@@ -120,6 +121,7 @@ class MainSettings(BaseSettings):
   NODE_CONFIG: NodeConfig                               = NodeConfig()
   WEATHER_SLUG_BUILDER_CONFIG: WeatherSlugBuilderConfig = WeatherSlugBuilderConfig()
   WEATHER_ORACLE_SETTINGS: WeatherOracleSettings        = WeatherOracleSettings()
+
 
 # ---- Public API -------------------------------------
 

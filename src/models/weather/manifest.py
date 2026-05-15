@@ -1,9 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from src.core.enums.weather.units import TemperatureUnit
-from src.models.weather.components import (
-  LocationModel
-)
+from src.models.weather.components import LocationModel
 
 
 @dataclass(slots=True)
@@ -11,6 +9,7 @@ class WeatherManifestModel:
   location: LocationModel
   temperature_unit: TemperatureUnit
   resolution_time: datetime
+  observation_max: float
 
   # ---- Public API -------------------------------------
 
@@ -32,4 +31,5 @@ class WeatherManifestModel:
       f"longitude:        {self.location.longitude}\n"
       f"temperature_unit: {self.temperature_unit.api_value},\n"
       f"resolution_time:  {self.resolution_time}\n"
+      f"observation_max:  {self.observation_max}\n"
     )

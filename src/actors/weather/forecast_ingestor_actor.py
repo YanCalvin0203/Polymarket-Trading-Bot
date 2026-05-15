@@ -4,7 +4,7 @@ from nautilus_trader.common.enums import LogColor
 from src.core.enums.common import Status
 from src.core.enums.weather import WeatherEndpoint
 from src.models.weather.manifest import WeatherManifestModel
-from src.oracle.weather_ensemble import WeatherEnsemble
+from src.oracle.weather import WeatherEnsemble
 
 
 class WeatherForecastIngestorActorConfig(ActorConfig):

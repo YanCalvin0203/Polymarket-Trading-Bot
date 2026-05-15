@@ -33,9 +33,9 @@ class WeatherEnsemble:
   # ---- Public API ----------------------------------
 
   def get_forecasts(
-      self, 
-      manifests: dict[str, WeatherManifestModel]
-    ) -> dict[str, WeatherForecastModel]:
+    self, 
+    manifests: dict[str, WeatherManifestModel]
+  ) -> dict[str, WeatherForecastModel]:
     """
     This function retrieves the weather forecasts for the given manifests.
 
@@ -61,9 +61,9 @@ class WeatherEnsemble:
   # ---- Internal Helpers ----------------------------
 
   def _get_single_forecast(
-      self, 
-      manifest: WeatherManifestModel
-    ) -> WeatherForecastModel | None:
+    self, 
+    manifest: WeatherManifestModel
+  ) -> WeatherForecastModel | None:
     """
     This function gets a single weather forecast for a given manifest.
 
@@ -144,10 +144,10 @@ class WeatherEnsemble:
       return None
 
   def _get_forecast_stats(
-      self, 
-      response: WeatherApiResponse, 
-      manifest: WeatherManifestModel
-    ) -> tuple[float, float]:
+    self, 
+    response: WeatherApiResponse, 
+    manifest: WeatherManifestModel
+  ) -> tuple[float, float]:
     """
     This function calculates forecast statistics from the raw API response.
 

@@ -224,10 +224,15 @@ class WeatherParser:
     --------------
     WeatherManifestModel | None: The parsed and structured manifest data, or None if parsing fails.
     """
+    observation_max = None
+    if event_model.observation is not None:
+      observation_max = event_model.observation.observation_max
+      
     manifest_model = WeatherManifestModel(
       location=event_model.location,
       temperature_unit=event_model.temperature_unit,
       resolution_time=event_model.resolution_time,
+      observation_max=observation_max
     )
 
     if not self.is_manifest_valid(manifest_model):

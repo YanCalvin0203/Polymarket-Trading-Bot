@@ -7,8 +7,8 @@ from src.core.settings import settings
 from src.core.enums.weather import TemperatureUnit
 from src.utils.temperature_converter import to_farenheit
 from src.models.weather import (
-  WeatherEventModel,
   WeatherObservationModel,
+  WeatherManifestModel
 )
 
 
@@ -19,36 +19,53 @@ class WeatherMetar:
 
   # ---- Public API ----------------------------------
 
-  def get_observations(self, events: dict[str, WeatherEventModel]) -> None:
+  def get_observations(
+    self, 
+    manifests: dict[str, WeatherManifestModel]
+  ) -> dict[str, WeatherObservationModel]:
     """
-    This function retrieves the weather observations and updates the weather events.
+    This function retrieves the weather observations for the given manifests.
 
     Parameters
     --------------
-    events (dict[str, WeatherEventModel]): The weather events for which to get the observations.
+    manifests (dict[str, WeatherManifestModel]): The weather manifests for which 
+      to get the observations.
+
+    Returns
+    --------------
+    dict[str, WeatherObservationModel]: The retrieved weather observations, keyed by 
+      manifest ID.
     """
-    for event in events.values():
-      observation = self._get_single_observation(event)
-      if observation is not None:
-        event.observation = observation
+    observations = {}
+    for manifest_id, manifest_model in manifests.items():
+      observation_model = self._get_single_observation(manifest=manifest_model)
+      if observation_model is not None:
+        observations[manifest_id] = observation_model
+
+    return observations
 
 
   # ---- Internal Helpers ----------------------------
 
-  def _get_single_observation(self, event: WeatherEventModel) -> WeatherObservationModel | None:
+  def _get_single_observation(
+    self, 
+    manifest: WeatherManifestModel
+  ) -> WeatherObservationModel | None:
     """
-    This function gets a single weather observation for a given event.
+    This function gets a single weather observation for a given manifest.
 
     Parameters
     --------------
-    event (WeatherEventModel): The weather event for which to get the observation.
+    manifest (WeatherManifestModel): The weather manifest for which to get 
+      the observation.
 
     Returns
     --------------
-    WeatherObservationModel | None: The structured observation data, or None if the request fails.
+    WeatherObservationModel | None: The structured observation data, or None if the 
+      request fails.
     """
     try:
-      params = self._build_query_params(event=event)
+      params = self._build_query_params(manifest=manifest)
       response = self._request_observation_data(params=params)
       if not response:
         return None
@@ -56,15 +73,14 @@ class WeatherMetar:
       data: dict[str, Any] = response[0]
       current_temperature = self._get_current_temperature(
         data=data, 
-        event=event
+        manifest=manifest
       )
       if current_temperature is None:
         return None
       
-      if event.observation is None:
-        previous_max_temperature = current_temperature
-      else:
-        previous_max_temperature = event.observation.observation_max
+      previous_max_temperature = current_temperature
+      if manifest.observation_max is not None:
+        previous_max_temperature = manifest.observation_max
 
       observation_model = WeatherObservationModel(
         observation_current=current_temperature,
@@ -76,20 +92,21 @@ class WeatherMetar:
     except Exception as e:
       return None
 
-  def _build_query_params(self, event: WeatherEventModel) -> dict[str, Any]:
+  def _build_query_params(self, manifest: WeatherManifestModel) -> dict[str, Any]:
     """
     This function builds the query parameters for the METAR API request.
 
     Parameters
     --------------
-    event (WeatherEventModel): The weather event for which to build the query parameters.
+    manifest (WeatherManifestModel): The weather manifest for which to build the 
+      query parameters.
 
     Returns
     --------------
     dict[str, Any]: The query parameters for the METAR API request.
     """
     params = settings.WEATHER_ORACLE_SETTINGS.METAR_QUERY_PARAMS.copy()
-    params["ids"] = event.location.icao_code
+    params["ids"] = manifest.location.icao_code
 
     return params
   
@@ -118,7 +135,11 @@ class WeatherMetar:
     except Exception as e:
       return None
   
-  def _get_current_temperature(self, data: dict[str, Any], event: WeatherEventModel) -> float | None:
+  def _get_current_temperature(
+    self, 
+    data: dict[str, Any], 
+    manifest: WeatherManifestModel
+  ) -> float | None:
     """
     This function extracts the current temperature from the raw API response data
     and converts it to the correct unit.
@@ -126,7 +147,7 @@ class WeatherMetar:
     Parameters
     --------------
     data (dict[str, Any]): The raw response data from the API.
-    event (WeatherEventModel): The weather event for which to get the temperature.
+    manifest (WeatherManifestModel): The weather manifest for which to get the temperature.
 
     Returns
     --------------
@@ -137,7 +158,7 @@ class WeatherMetar:
       return None
     
     # Convert the temperature unit if necessary (initial response at Celsius)
-    if event.temperature_unit.api_value == TemperatureUnit.FAHRENHEIT.api_value:
+    if manifest.temperature_unit.api_value == TemperatureUnit.FAHRENHEIT.api_value:
       current_temperature = to_farenheit(current_temperature)
 
     return current_temperature
