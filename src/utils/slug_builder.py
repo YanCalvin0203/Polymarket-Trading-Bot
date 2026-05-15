@@ -1,5 +1,5 @@
 from datetime import UTC, datetime, timedelta
-from src.core.settings import settings
+from src.settings import settings
 
 
 def weather_slug_builder() -> list[str]:

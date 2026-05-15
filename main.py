@@ -1,4 +1,4 @@
-from src.core.settings import settings
+from src.settings import settings
 from nautilus_trader.live.node import TradingNode
 from nautilus_trader.live.config import TradingNodeConfig
 from nautilus_trader.trading.config import ImportableStrategyConfig
@@ -87,7 +87,11 @@ def main() -> None:
       weather_strategy_config,
     ],
     actors=[
+      # ---- State Actors --------------------------------
       weather_state_actor_config,
+
+
+      # ---- Component Actors ----------------------------
       weather_forecast_ingestor_actor_config,
       weather_observation_ingestor_actor_config,
     ]

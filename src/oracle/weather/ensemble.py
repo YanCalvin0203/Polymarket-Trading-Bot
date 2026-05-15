@@ -7,7 +7,7 @@ from openmeteo_requests import Client
 from openmeteo_sdk.WeatherApiResponse import WeatherApiResponse
 from numpy import array
 from pandas import DataFrame, Timestamp, Timedelta, date_range
-from src.core.settings import settings
+from src.settings import settings
 from src.models.weather import (
   WeatherForecastModel,
   WeatherManifestModel

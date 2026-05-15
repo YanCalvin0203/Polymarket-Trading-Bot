@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from src.core.enums.weather.units import TemperatureUnit
+from src.enums.weather.units import TemperatureUnit
 from src.models.weather.components import LocationModel
 
 
