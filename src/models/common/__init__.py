@@ -1,4 +1,4 @@
-from .pricing_mode import PricingModel
+from .pricing import PricingModel
 
 
 __all__ = [

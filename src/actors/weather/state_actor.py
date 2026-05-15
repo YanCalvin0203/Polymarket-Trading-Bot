@@ -3,7 +3,7 @@ from nautilus_trader.common.actor import Actor
 from nautilus_trader.common.enums import LogColor
 from src.enums.common import Status
 from src.enums.weather import WeatherEndpoint
-from src.parsers.weather_parser import WeatherParser
+from src.parsers.weather import WeatherParser
 from src.models.weather import (
   WeatherForecastModel, 
   WeatherObservationModel

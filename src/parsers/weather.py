@@ -6,7 +6,7 @@ from typing import Any
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from pandas import Timestamp
-from src.models.common.pricing_mode import PricingModel
+from src.models.common import PricingModel
 from src.enums.weather import (
   TemperatureUnit,
   TemperatureQualifier,
