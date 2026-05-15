@@ -30,6 +30,8 @@ class NodeConfig(BaseSettings):
 
   WEATHER_STATE_ACTOR_PATH: str = "src.actors.weather_state_actor:WeatherStateActor"
   WEATHER_STATE_ACTOR_CONFIG_PATH: str = "src.actors.weather_state_actor:WeatherStateActorConfig"
+  WEATHER_FORECAST_INGESTOR_ACTOR_PATH: str = "src.actors.weather_forecast_ingestor_actor:WeatherForecastIngestorActor"
+  WEATHER_FORECAST_INGESTOR_ACTOR_CONFIG_PATH: str = "src.actors.weather_forecast_ingestor_actor:WeatherForecastIngestorActorConfig"
 
   # ---- Polymarket API Credentials ----------------------
 

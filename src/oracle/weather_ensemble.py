@@ -8,8 +8,10 @@ from openmeteo_sdk.WeatherApiResponse import WeatherApiResponse
 from numpy import array
 from pandas import DataFrame, Timestamp, Timedelta, date_range
 from src.core.settings import settings
-from src.models.weather.events import WeatherEventModel
-from src.models.weather.components import WeatherForecastModel
+from src.models.weather import (
+  WeatherForecastModel,
+  WeatherManifestModel
+)
 
 
 class WeatherEnsemble:
@@ -30,43 +32,60 @@ class WeatherEnsemble:
 
   # ---- Public API ----------------------------------
 
-  def get_forecasts(self, events: dict[str, WeatherEventModel]) -> None:
+  def get_forecasts(
+      self, 
+      manifests: dict[str, WeatherManifestModel]
+    ) -> dict[str, WeatherForecastModel]:
     """
-    This function retrieves the weather forecast and update the weather events.
+    This function retrieves the weather forecasts for the given manifests.
 
     Parameters
     --------------
-    events (dict[str, WeatherEventModel]): The weather events for which to get the forecasts.
-    """
-    for event in events.values():
-      forecast_model = self._get_single_forecast(event=event)
-      if forecast_model is not None:
-        event.forecast = forecast_model
-
-
-  # ---- Internal Helpers ----------------------------
-
-  def _get_single_forecast(self, event: WeatherEventModel) -> WeatherForecastModel | None:
-    """
-    This function gets a single weather forecast for a given event.
-
-    Parameters
-    --------------
-    event (WeatherEventModel): The weather event for which to get the forecast.
+    manifests (dict[str, WeatherManifestModel]): The weather manifests for which 
+      to get the forecasts.
 
     Returns
     --------------
-    WeatherForecastModel | None: The structured forecast data, or None if the request fails.
+    dict[str, WeatherForecastModel]: The retrieved weather forecasts, keyed by 
+      manifest ID.
+    """
+    forecasts = {}
+    for manifest_id, manifest_model in manifests.items():
+      forecast_model = self._get_single_forecast(manifest=manifest_model)
+      if forecast_model is not None:
+        forecasts[manifest_id] = forecast_model
+
+    return forecasts
+  
+  
+  # ---- Internal Helpers ----------------------------
+
+  def _get_single_forecast(
+      self, 
+      manifest: WeatherManifestModel
+    ) -> WeatherForecastModel | None:
+    """
+    This function gets a single weather forecast for a given manifest.
+
+    Parameters
+    --------------
+    manifest (WeatherManifestModel): The weather manifest for which to get 
+      the forecast.
+
+    Returns
+    --------------
+    WeatherForecastModel | None: The structured forecast data, or None if the 
+      request fails.
     """
     try:
-      params = self._build_query_params(event=event)
+      params = self._build_query_params(manifest=manifest)
       response = self._request_forecast_data(params=params)
       if not response:
         return None
       
       forecast_mean, forecast_stdev = self._get_forecast_stats(
         response=response,
-        event=event
+        manifest=manifest
       )
       forecast_model = WeatherForecastModel(
         forecast_mean=forecast_mean,
@@ -78,24 +97,25 @@ class WeatherEnsemble:
     except Exception as e:
       return None
   
-  def _build_query_params(self, event: WeatherEventModel) -> dict[str, Any]:
+  def _build_query_params(self, manifest: WeatherManifestModel) -> dict[str, Any]:
     """
     This function builds the query parameters for the ensemble API request.
 
     Parameters
     --------------
-    event (WeatherEventModel): The weather event for which to build the query parameters.
+    manifest (WeatherManifestModel): The weather manifest for which to build the 
+      query parameters.
 
     Returns
     --------------
     dict[str, Any]: The query parameters for the ensemble API request.
     """
     params = settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_QUERY_PARAMS.copy()
-    params["latitude"] = event.location.latitude
-    params["longitude"] = event.location.longitude
-    params["start_date"] = event.resolution_time.strftime('%Y-%m-%d')
-    params["end_date"] = event.resolution_time.strftime('%Y-%m-%d')
-    params["temperature_unit"] = event.temperature_unit.api_value
+    params["latitude"] = manifest.location.latitude
+    params["longitude"] = manifest.location.longitude
+    params["start_date"] = manifest.resolution_time.strftime('%Y-%m-%d')
+    params["end_date"] = manifest.resolution_time.strftime('%Y-%m-%d')
+    params["temperature_unit"] = manifest.temperature_unit.api_value
 
     return params
   
@@ -123,14 +143,18 @@ class WeatherEnsemble:
     except Exception as e:
       return None
 
-  def _get_forecast_stats(self, response: WeatherApiResponse, event: WeatherEventModel) -> tuple[float, float]:
+  def _get_forecast_stats(
+      self, 
+      response: WeatherApiResponse, 
+      manifest: WeatherManifestModel
+    ) -> tuple[float, float]:
     """
     This function calculates forecast statistics from the raw API response.
 
     Parameters
     --------------
     response (WeatherApiResponse): The raw response data from the API.
-    event (WeatherEventModel): The weather event for which to calculate statistics.
+    manifest (WeatherManifestModel): The weather manifest for which to calculate statistics.
 
     Returns
     --------------
@@ -145,7 +169,7 @@ class WeatherEnsemble:
       freq=Timedelta(seconds=hourly.Interval()),
       inclusive="left"
     )   
-    timestamps = timestamps.tz_convert(event.location.timezone)
+    timestamps = timestamps.tz_convert(manifest.location.timezone)
 
     # Retrieve the ensemble member forecasts and build the numpy array
     ensemble_count = settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_COUNT

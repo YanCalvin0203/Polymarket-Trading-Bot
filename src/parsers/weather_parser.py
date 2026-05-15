@@ -9,7 +9,7 @@ from pandas import Timestamp
 from src.models.common.pricing_mode import PricingModel
 from src.core.enums.weather import (
   TemperatureUnit,
-  TemperatureQualifier
+  TemperatureQualifier,
 )
 from src.models.weather import (
   LocationModel,

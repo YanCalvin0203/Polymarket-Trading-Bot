@@ -61,6 +61,11 @@ def main() -> None:
     config_path=settings.NODE_CONFIG.WEATHER_STATE_ACTOR_CONFIG_PATH,
     config={}
   )
+  weather_forecast_ingestor_actor_config = ImportableActorConfig(
+    actor_path=settings.NODE_CONFIG.WEATHER_FORECAST_INGESTOR_ACTOR_PATH,
+    config_path=settings.NODE_CONFIG.WEATHER_FORECAST_INGESTOR_ACTOR_CONFIG_PATH,
+    config={}
+  )
 
   # ---- Client Configurations ----------------------
 
@@ -74,10 +79,11 @@ def main() -> None:
       settings.NODE_CONFIG.WEATHER_CLIENT_NAME: weather_exec_client_config
     },
     strategies=[
-      weather_strategy_config
+      weather_strategy_config,
     ],
     actors=[
-      weather_state_actor_config
+      weather_state_actor_config,
+      weather_forecast_ingestor_actor_config,
     ]
   )
 

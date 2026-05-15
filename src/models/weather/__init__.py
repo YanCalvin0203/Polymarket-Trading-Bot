@@ -9,6 +9,7 @@ from .events import (
   WeatherMarketModel
 )
 
+
 __all__ = [
   "WeatherForecastModel",
   "WeatherObservationModel",
