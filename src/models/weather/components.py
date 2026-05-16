@@ -26,6 +26,31 @@ class WeatherHistoricalMaxModel:
       f"historical_max_data: {self.historical_max_data},\n"
       f"last_updated:        {self.last_updated}\n"
     )
+  
+
+@dataclass(slots=True)
+class WeatherHistoricalForecastModel:
+  historical_forecast_data: DataFrame
+  last_updated: datetime
+
+  # ---- Public API -------------------------------------
+
+  def __str__(self) -> str:
+    """
+    This functions returns a string representation of the
+    WeatherHistoricalForecastModel instance.
+
+    Returns
+    --------------
+    str: 
+      The string representation of the WeatherHistoricalForecastModel 
+      instance.
+    """
+    return (
+      f"---- Weather Historical Forecast Model ----------------\n"
+      f"historical_forecast_data: {self.historical_forecast_data},\n"
+      f"last_updated:             {self.last_updated}\n"
+    )
 
 
 @dataclass(slots=True)

@@ -1,6 +1,7 @@
 from .manifest import WeatherManifestModel
 from .components import (
   WeatherHistoricalMaxModel,
+  WeatherHistoricalForecastModel,
   WeatherForecastModel, 
   WeatherObservationModel, 
   LocationModel
@@ -13,6 +14,7 @@ from .events import (
 
 __all__ = [
   "WeatherHistoricalMaxModel",
+  "WeatherHistoricalForecastModel",
   "WeatherForecastModel",
   "WeatherObservationModel",
   "LocationModel",
