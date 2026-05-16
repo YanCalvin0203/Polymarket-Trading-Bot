@@ -26,8 +26,8 @@ class WeatherForecastIngestorActor(Actor):
 
     Parameters:
     ----------------
-    config (WeatherForecastIngestorActorConfig): The configuration for the 
-      WeatherForecastIngestorActor.
+    config (WeatherForecastIngestorActorConfig): 
+      The configuration for the WeatherForecastIngestorActor.
     """
     super().__init__(config)
     self.ensemble = WeatherEnsemble()
@@ -92,7 +92,8 @@ class WeatherForecastIngestorActor(Actor):
 
     Parameters:
     ----------------
-    manifests (dict[str, WeatherManifestModel]): The manifests requests message.
+    manifests (dict[str, WeatherManifestModel]): 
+      The manifests requests message.
     """
     self.log.debug(
       message=f"Received {len(manifests)} forecast data requests",

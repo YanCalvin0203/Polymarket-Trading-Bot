@@ -9,7 +9,8 @@ def weather_slug_builder() -> list[str]:
 
   Returns:
   ---------------
-  list[str]: A list of slugs for the specified cities and time range.
+  list[str]:
+    A list of slugs for the specified cities and time range.
   """
   slugs = []
   today = datetime.now(tz=UTC).date()

@@ -20,7 +20,8 @@ class WeatherStrategy(Strategy):
 
     Parameters:
     ----------------
-    config (WeatherStrategyConfig): The configuration for the WeatherStrategy.
+    config (WeatherStrategyConfig): 
+      The configuration for the WeatherStrategy.
     """
     super().__init__(config)
 

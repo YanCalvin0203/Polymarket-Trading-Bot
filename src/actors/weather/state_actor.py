@@ -29,7 +29,8 @@ class WeatherStateActor(Actor):
 
     Parameters:
     ----------------
-    config (WeatherStateActorConfig): The configuration for the WeatherStateActor.
+    config (WeatherStateActorConfig): 
+      The configuration for the WeatherStateActor.
     """
     super().__init__(config)
     self.events = {}
@@ -126,7 +127,8 @@ class WeatherStateActor(Actor):
 
     Parameters
     ----------------
-    forecast_update (dict[str, WeatherForecastModel]): The forecast update message.
+    forecast_update (dict[str, WeatherForecastModel]): 
+      The forecast update message.
     """
     self.log.debug(
       message=f"Received forecast update for {len(forecast_update)} events",
@@ -151,7 +153,8 @@ class WeatherStateActor(Actor):
 
     Parameters
     ----------------
-    observation_update (dict[str, WeatherObservationModel]): The observation update message.
+    observation_update (dict[str, WeatherObservationModel]): 
+      The observation update message.
     """
     self.log.debug(
       message=f"Received observation update for {len(observation_update)} events",
@@ -173,7 +176,8 @@ class WeatherStateActor(Actor):
 
     Parameters
     ----------------
-    status (Status): The forecast status message.
+    status (Status): 
+      The forecast status message.
     """
     self.log.debug(
       message=f"Received forecast status: {status.value}",
@@ -197,7 +201,8 @@ class WeatherStateActor(Actor):
 
     Parameters
     ----------------
-    status (Status): The observation status message.
+    status (Status): 
+      The observation status message.
     """
     self.log.debug(
       message=f"Received observation status: {status.value}",

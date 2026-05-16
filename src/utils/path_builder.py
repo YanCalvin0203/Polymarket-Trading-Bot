@@ -4,14 +4,22 @@ def make_path(module: str, class_name: str, package: str = None, domain: str = N
 
   Parameters:
   ----------------
-  module (str): The module path.
-  class_name (str): The name of the class.
-  package (str): The package name, if applicable.
-  domain (str): The domain of the class, if applicable.
+  module (str): 
+    The module path.
+
+  class_name (str): 
+    The name of the class.
+
+  package (str): 
+    The package name, if applicable.
+
+  domain (str): 
+    The domain of the class, if applicable.
 
   Returns:
   ----------------
-  str: The full path string for importing the class.
+  str: 
+    The full path string for importing the class.
   """
   path_string = ""
   if package:

@@ -7,13 +7,19 @@ class WeatherOracleSettings:
   """
   # ---- Ensemble ----------------------------------------
 
-  ENSEMBLE_ENDPOINT: str = "https://ensemble-api.open-meteo.com/v1/ensemble"
-  ENSEMBLE_QUERY_PARAMS: dict[str, Any] = {
+  ENSEMBLE_FORECAST_ENDPOINT: str = "https://ensemble-api.open-meteo.com/v1/ensemble"
+  ENSEMBLE_FORECAST_QUERY_PARAMS: dict[str, Any] = {
     "hourly": ["temperature_2m"],
     "models": "ecmwf_ifs025",
     "timezone": "auto"
   }
+  ENSEMBLE_ARCHIVE_ENDPOINT: str = "https://archive-api.open-meteo.com/v1/archive"
+  ENSEMBLE_ARCHIVE_QUERY_PARAMS: dict[str, Any] = {
+    "daily": ["temperature_2m_max"],
+    "timezone": "auto"
+  }
   ENSEMBLE_COUNT: int = 51
+  HISTORICAL_MAX_DAYS: int = 90
 
   # ---- Observation -------------------------------------
 

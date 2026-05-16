@@ -1,5 +1,31 @@
 from dataclasses import dataclass
 from datetime import datetime
+from pandas import DataFrame
+
+
+@dataclass(slots=True)
+class WeatherHistoricalMaxModel:
+  historical_max_data: DataFrame
+  last_updated: datetime
+
+  # ---- Public API -------------------------------------
+
+  def __str__(self) -> str:
+    """
+    This functions returns a string representation of the
+    WeatherHistoricalMaxModel instance.
+
+    Returns
+    --------------
+    str: 
+      The string representation of the WeatherHistoricalMaxModel 
+      instance.
+    """
+    return (
+      f"---- Weather Historical Max Model ----------------\n"
+      f"historical_max_data: {self.historical_max_data},\n"
+      f"last_updated:        {self.last_updated}\n"
+    )
 
 
 @dataclass(slots=True)
@@ -17,7 +43,8 @@ class WeatherForecastModel:
 
     Returns
     --------------
-    str: The string representation of the WeatherForecastModel instance.
+    str: 
+      The string representation of the WeatherForecastModel instance.
     """
     return (
       f"---- Weather Forecast Model ----------------------\n"
@@ -26,7 +53,7 @@ class WeatherForecastModel:
       f"last_updated:   {self.last_updated}\n"
     )
   
-
+  
 @dataclass(slots=True)
 class WeatherObservationModel:
   observation_current: float
@@ -42,7 +69,8 @@ class WeatherObservationModel:
 
     Returns
     --------------
-    str: The string representation of the WeatherObservationModel instance.
+    str: 
+      The string representation of the WeatherObservationModel instance.
     """
     return (
       f"---- Weather Observation Model -------------------\n"
@@ -69,7 +97,8 @@ class LocationModel:
 
     Returns
     --------------
-    str: The string representation of the LocationModel instance.
+    str: 
+      The string representation of the LocationModel instance.
     """
     return (
       f"---- Location Model -------------------------\n"

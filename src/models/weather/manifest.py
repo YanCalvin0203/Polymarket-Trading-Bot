@@ -20,7 +20,8 @@ class WeatherManifestModel:
 
     Returns
     --------------
-    str: The string representation of the WeatherManifestModel instance.
+    str: 
+      The string representation of the WeatherManifestModel instance.
     """
     return (
       f"---- Weather Manifest Model -------------------\n"

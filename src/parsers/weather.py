@@ -51,17 +51,22 @@ class WeatherParser:
   
   # ---- Public API ----------------------------------
 
-  def parse_instruments(self, instruments: list[dict[str, Any]]) -> dict[str, WeatherEventModel]:
+  def parse_instruments(
+    self, 
+    instruments: list[dict[str, Any]]
+  ) -> dict[str, WeatherEventModel]:
     """
     This function parses raw instrument data into a dictionary of structured event data.
 
     Parameters
     --------------
-    instruments (list[dict[str, Any]]): The list of raw instrument data retrieved from Polymarket.
+    instruments (list[dict[str, Any]]): 
+      The list of raw instrument data retrieved from Polymarket.
 
     Returns
     --------------
-    dict[str, WeatherEventModel]: The parsed and structured dictionary of instrument data.
+    dict[str, WeatherEventModel]: 
+      The parsed and structured dictionary of instrument data.
     """
     events = {}
     for instrument in instruments:
@@ -86,17 +91,22 @@ class WeatherParser:
 
     return events
 
-  def parse_manifests(self, events_dict: dict[str, WeatherEventModel]) -> dict[str, WeatherManifestModel]:
+  def parse_manifests(
+    self, 
+    events_dict: dict[str, WeatherEventModel]
+  ) -> dict[str, WeatherManifestModel]:
     """
     This function parses event models into a dictionary of structured manifest data.
 
     Parameters
     --------------
-    events_dict (dict[str, WeatherEventModel]): The dictionary of event models to parse manifests for.
+    events_dict (dict[str, WeatherEventModel]): 
+      The dictionary of event models to parse manifests for.
 
     Returns
     --------------
-    dict[str, WeatherManifestModel]: The parsed and structured dictionary of manifest data.
+    dict[str, WeatherManifestModel]: 
+      The parsed and structured dictionary of manifest data.
     """
     manifest = {}
     for event_id, event_model in events_dict.items():
@@ -110,17 +120,22 @@ class WeatherParser:
   
   # ---- Internal Helpers ----------------------------
 
-  def _parse_single_event(self, instrument_data: dict[str, Any]) -> WeatherEventModel | None:
+  def _parse_single_event(
+    self, 
+    instrument_data: dict[str, Any]
+  ) -> WeatherEventModel | None:
     """
     This function parses a single instrument data into a structured event format.
 
     Parameters
     --------------
-    instrument_data (dict[str, Any]): The instrument data.
+    instrument_data (dict[str, Any]): 
+      The instrument data.
 
     Returns
     --------------
-    WeatherEventModel | None: The parsed and structured event data, or None if parsing fails.
+    WeatherEventModel | None: 
+      The parsed and structured event data, or None if parsing fails.
     """
     raw_instrument: dict[str, Any] = instrument_data.get("_gamma_original", None)
     if raw_instrument is None:
@@ -165,17 +180,22 @@ class WeatherParser:
 
     return event_model
 
-  def _parse_single_market(self, instrument_data: dict[str, Any]) -> WeatherMarketModel | None:
+  def _parse_single_market(
+    self, 
+    instrument_data: dict[str, Any]
+  ) -> WeatherMarketModel | None:
     """
     This function parses a single instrument data into a structured market format.
 
     Parameters
     --------------
-    instrument_data (dict[str, Any]): The instrument data.
+    instrument_data (dict[str, Any]): 
+      The instrument data.
 
     Returns
     --------------
-    WeatherMarketModel | None: The parsed and structured market data, or None if parsing fails.
+    WeatherMarketModel | None: 
+      The parsed and structured market data, or None if parsing fails.
     """
     raw_instrument: dict[str, Any] = instrument_data.get("_gamma_original", None)
     if raw_instrument is None:
@@ -212,17 +232,22 @@ class WeatherParser:
     
     return market_model
   
-  def _parse_single_manifest(self, event_model: WeatherEventModel) -> WeatherManifestModel | None:
+  def _parse_single_manifest(
+    self, 
+    event_model: WeatherEventModel
+  ) -> WeatherManifestModel | None:
     """
     This function parses a single event model into a structured manifest format.
 
     Parameters
     --------------
-    event_model (WeatherEventModel): The event model.
+    event_model (WeatherEventModel): 
+      The event model.
 
     Returns
     --------------
-    WeatherManifestModel | None: The parsed and structured manifest data, or None if parsing fails.
+    WeatherManifestModel | None: 
+      The parsed and structured manifest data, or None if parsing fails.
     """
     observation_max = None
     if event_model.observation is not None:
@@ -246,11 +271,13 @@ class WeatherParser:
 
     Parameters
     --------------
-    location_model (LocationModel): The parsed location model to validate.
+    location_model (LocationModel): 
+      The parsed location model to validate.
 
     Returns
     --------------
-    bool: True if the location model is valid, False otherwise.
+    bool: 
+      True if the location model is valid, False otherwise.
     """
     if location_model.city_name == "" or location_model.icao_code == "":
       return False
@@ -269,11 +296,13 @@ class WeatherParser:
 
     Parameters
     --------------
-    event_model (WeatherEventModel): The parsed event model to validate.
+    event_model (WeatherEventModel): 
+      The parsed event model to validate.
 
     Returns
     --------------
-    bool: True if the event model is valid, False otherwise.
+    bool: 
+      True if the event model is valid, False otherwise.
     """
     if event_model.event_id == "" or event_model.temperature_unit is None:
       return False
@@ -292,11 +321,13 @@ class WeatherParser:
 
     Parameters
     --------------
-    market_model (WeatherMarketModel): The parsed market model to validate.
+    market_model (WeatherMarketModel): 
+      The parsed market model to validate.
 
     Returns
     --------------
-    bool: True if the market model is valid, False otherwise.
+    bool: 
+      True if the market model is valid, False otherwise.
     """
     if market_model.parent_event_id == "" or  market_model.bucket_range == (None, None):
       return False
@@ -312,11 +343,13 @@ class WeatherParser:
 
     Parameters
     --------------
-    manifest_model (WeatherManifestModel): The parsed manifest model to validate.
+    manifest_model (WeatherManifestModel): 
+      The parsed manifest model to validate.
 
     Returns
     --------------
-    bool: True if the manifest model is valid, False otherwise.
+    bool: 
+      True if the manifest model is valid, False otherwise.
     """
     if manifest_model.temperature_unit is None or manifest_model.resolution_time is None:
       return False
@@ -332,11 +365,13 @@ class WeatherParser:
 
     Parameters
     --------------
-    raw_instrument (dict[str, Any]): The raw instrument data.
+    raw_instrument (dict[str, Any]): 
+      The raw instrument data.
 
     Returns
     --------------
-    str: The parsed city name.
+    str: 
+      The parsed city name.
     """
     market_question = raw_instrument.get("question", "")
     if market_question == "":
@@ -354,11 +389,13 @@ class WeatherParser:
 
     Parameters
     --------------
-    raw_instrument (dict[str, Any]): The raw instrument data.
+    raw_instrument (dict[str, Any]): 
+      The raw instrument data.
 
     Returns
     --------------
-    str: The parsed ICAO code.
+    str: 
+      The parsed ICAO code.
     """
     resolution_source = raw_instrument.get("resolutionSource", "")
     if resolution_source == "":
@@ -370,17 +407,22 @@ class WeatherParser:
     
     return station_code.group(1)
   
-  def _parse_coordinates(self, raw_instrument: dict[str, Any]) -> tuple[float | None, float | None]:
+  def _parse_coordinates(
+    self, 
+    raw_instrument: dict[str, Any]
+  ) -> tuple[float | None, float | None]:
     """
     This function parses the coordinates of the city from the raw instrument data.
 
     Parameters
     --------------
-    raw_instrument (dict[str, Any]): The raw instrument data.
+    raw_instrument (dict[str, Any]): 
+      The raw instrument data.
 
     Returns
     --------------
-    tuple[float | None, float | None]: The parsed latitude and longitude of the city.
+    tuple[float | None, float | None]: 
+      The parsed latitude and longitude of the city.
     """
     icao_code = self._parse_icao_code(raw_instrument)
     if icao_code == "":
@@ -401,11 +443,13 @@ class WeatherParser:
 
     Parameters
     --------------
-    raw_instrument (dict[str, Any]): The raw instrument data.
+    raw_instrument (dict[str, Any]): 
+      The raw instrument data.
 
     Returns
     --------------
-    str: The parsed timezone of the city.
+    str: 
+      The parsed timezone of the city.
     """
     icao_code = self._parse_icao_code(raw_instrument)
     if icao_code == "":
@@ -424,11 +468,13 @@ class WeatherParser:
 
     Parameters
     --------------
-    raw_instrument (dict[str, Any]): The raw instrument data.
+    raw_instrument (dict[str, Any]): 
+      The raw instrument data.
 
     Returns
     --------------
-    datetime | None: The parsed resolution time or None if not found.
+    datetime | None: 
+      The parsed resolution time or None if not found.
     """
     resolution_date_iso = raw_instrument.get("endDateIso", None)
     if resolution_date_iso is None:
@@ -455,17 +501,22 @@ class WeatherParser:
 
     return resolution_time
   
-  def _parse_bucket_range(self, raw_instrument: dict[str, Any]) -> tuple[float, float]:
+  def _parse_bucket_range(
+    self, 
+    raw_instrument: dict[str, Any]
+  ) -> tuple[float, float]:
     """
     This function parses the bucket range from the raw instrument data.
 
     Parameters
     --------------
-    raw_instrument (dict[str, Any]): The raw instrument data.
+    raw_instrument (dict[str, Any]): 
+      The raw instrument data.
 
     Returns
     --------------
-    tuple[float, float]: The parsed bucket range.
+    tuple[float, float]: 
+      The parsed bucket range.
     """
     temperature_str = raw_instrument.get("groupItemTitle", "")
     if temperature_str == "":
@@ -497,17 +548,22 @@ class WeatherParser:
 
     return (lower_bound, upper_bound)
 
-  def _parse_temperature_unit(self, raw_instrument: dict[str, Any]) -> TemperatureUnit | None:
+  def _parse_temperature_unit(
+    self, 
+    raw_instrument: dict[str, Any]
+  ) -> TemperatureUnit | None:
     """
     This function parses the temperature unit from the raw instrument data.
 
     Parameters
     --------------
-    raw_instrument (dict[str, Any]): The raw instrument data.
+    raw_instrument (dict[str, Any]): 
+      The raw instrument data.
 
     Returns
     --------------
-    TemperatureUnit | None: The parsed temperature unit enum or None if not found.
+    TemperatureUnit | None: 
+      The parsed temperature unit enum or None if not found.
     """
     temperature_str = raw_instrument.get("groupItemTitle", "")
     if temperature_str == "":
@@ -524,17 +580,22 @@ class WeatherParser:
     except ValueError:
       return None
   
-  def _parse_token_ids(self, raw_instrument: dict[str, Any]) -> tuple[int | None, int | None]:
+  def _parse_token_ids(
+    self, 
+    raw_instrument: dict[str, Any]
+  ) -> tuple[int | None, int | None]:
     """
     This function parses the token IDs from the raw instrument data.
 
     Parameters
     --------------
-    raw_instrument (dict[str, Any]): The raw instrument data.
+    raw_instrument (dict[str, Any]): 
+      The raw instrument data.
 
     Returns
     --------------
-    tuple[int | None, int | None]: The parsed yes and no token IDs.
+    tuple[int | None, int | None]: 
+      The parsed yes and no token IDs.
     """
     raw_clob_token_ids = raw_instrument.get("clobTokenIds", None)
     if raw_clob_token_ids is None:

@@ -28,13 +28,13 @@ class WeatherMetar:
 
     Parameters
     --------------
-    manifests (dict[str, WeatherManifestModel]): The weather manifests for which 
-      to get the observations.
+    manifests (dict[str, WeatherManifestModel]): 
+      The weather manifests for which to get the observations.
 
     Returns
     --------------
-    dict[str, WeatherObservationModel]: The retrieved weather observations, keyed by 
-      manifest ID.
+    dict[str, WeatherObservationModel]: 
+      The retrieved weather observations, keyed by manifest ID.
     """
     observations = {}
     for manifest_id, manifest_model in manifests.items():
@@ -56,13 +56,13 @@ class WeatherMetar:
 
     Parameters
     --------------
-    manifest (WeatherManifestModel): The weather manifest for which to get 
-      the observation.
+    manifest (WeatherManifestModel): 
+      The weather manifest for which to get the observation.
 
     Returns
     --------------
-    WeatherObservationModel | None: The structured observation data, or None if the 
-      request fails.
+    WeatherObservationModel | None: 
+      The structured observation data, or None if the request fails.
     """
     try:
       params = self._build_query_params(manifest=manifest)
@@ -98,12 +98,13 @@ class WeatherMetar:
 
     Parameters
     --------------
-    manifest (WeatherManifestModel): The weather manifest for which to build the 
-      query parameters.
+    manifest (WeatherManifestModel): 
+      The weather manifest for which to build the query parameters.
 
     Returns
     --------------
-    dict[str, Any]: The query parameters for the METAR API request.
+    dict[str, Any]: 
+      The query parameters for the METAR API request.
     """
     params = settings.WEATHER_ORACLE_SETTINGS.METAR_QUERY_PARAMS.copy()
     params["ids"] = manifest.location.icao_code
@@ -116,11 +117,13 @@ class WeatherMetar:
 
     Parameters
     --------------
-    params (dict[str, Any]): The query parameters for the API request.
+    params (dict[str, Any]): 
+      The query parameters for the API request.
 
     Returns
     --------------
-    dict[str, Any] | None: The raw response data from the API, or None if the request fails.
+    dict[str, Any] | None: 
+      The raw response data from the API, or None if the request fails.
     """
     try:
       response = requests.get(
@@ -146,12 +149,16 @@ class WeatherMetar:
 
     Parameters
     --------------
-    data (dict[str, Any]): The raw response data from the API.
-    manifest (WeatherManifestModel): The weather manifest for which to get the temperature.
+    data (dict[str, Any]): 
+      The raw response data from the API.
+      
+    manifest (WeatherManifestModel): 
+      The weather manifest for which to get the temperature.
 
     Returns
     --------------
-    float | None: The current temperature, or None if it cannot be extracted.
+    float | None: 
+      The current temperature, or None if it cannot be extracted.
     """
     current_temperature = data.get("temp", None)
     if current_temperature is None:

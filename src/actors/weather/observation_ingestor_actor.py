@@ -26,8 +26,8 @@ class WeatherObservationIngestorActor(Actor):
 
     Parameters:
     ----------------
-    config (WeatherObservationIngestorActorConfig): The configuration for the 
-      WeatherObservationIngestorActor.
+    config (WeatherObservationIngestorActorConfig): 
+      The configuration for the WeatherObservationIngestorActor.
     """
     super().__init__(config)
     self.metar = WeatherMetar()
@@ -92,7 +92,8 @@ class WeatherObservationIngestorActor(Actor):
 
     Parameters:
     ----------------
-    manifests (dict[str, WeatherManifestModel]): The manifests requests message.
+    manifests (dict[str, WeatherManifestModel]): 
+      The manifests requests message.
     """
     self.log.debug(
       message=f"Received {len(manifests)} observation data requests",

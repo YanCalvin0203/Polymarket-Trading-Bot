@@ -17,7 +17,8 @@ class PricingModel:
 
     Returns
     --------------
-    str: The string representation of the PricingModel instance.
+    str: 
+      The string representation of the PricingModel instance.
     """
     return (
       f"---- Pricing Model -------------------------\n"

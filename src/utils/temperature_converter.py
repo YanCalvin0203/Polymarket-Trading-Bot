@@ -5,11 +5,13 @@ def to_farenheit(celsius: float) -> float:
 
   Parameters
   --------------
-  celsius (float): The temperature in Celsius.
+  celsius (float): 
+    The temperature in Celsius.
 
   Returns
   --------------
-  float: The temperature in Farenheit.
+  float: 
+    The temperature in Farenheit.
   """
   return (celsius * 9/5) + 32
 
@@ -21,10 +23,12 @@ def to_celsius(farenheit: float) -> float:
 
   Parameters
   --------------
-  farenheit (float): The temperature in Farenheit.
+  farenheit (float): 
+    The temperature in Farenheit.
 
   Returns
   --------------
-  float: The temperature in Celsius.
+  float: 
+    The temperature in Celsius.
   """
   return (farenheit - 32) * 5/9

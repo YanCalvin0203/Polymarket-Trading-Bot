@@ -30,12 +30,13 @@ class WeatherEventModel:
 
   def __str__(self) -> str:
     """
-    This functions returns a string representation of the WeatherEventModel s
+    This functions returns a string representation of the WeatherEventModel
     instance.
 
     Returns
     --------------
-    str: The string representation of the WeatherEventModel instance.
+    str: 
+      The string representation of the WeatherEventModel instance.
     """
     return (
       f"---- Weather Event Model --------------------------\n"
@@ -85,7 +86,8 @@ class WeatherMarketModel:
 
     Returns
     --------------
-    str: The string representation of the WeatherMarketModel instance.
+    str: 
+      The string representation of the WeatherMarketModel instance.
     """
     return (
       f"---- Weather Market Model -------------------------\n"
