@@ -1,5 +1,4 @@
-import datetime
-
+from datetime import datetime, timezone
 from pandas import Timedelta, Timestamp
 from nautilus_trader.config import ActorConfig
 from nautilus_trader.common.actor import Actor
@@ -9,8 +8,8 @@ from src.enums.common import Status
 from src.enums.weather import WeatherTimer, WeatherEndpoint
 from src.oracle.weather.ensemble import WeatherEnsemble
 from src.database.weather_adapter import WeatherPostgresAdapter
-from src.settings import settings
 from src.models.weather import LocationModel
+from src.settings import settings
 
 
 class WeatherDataCollectorActorConfig(ActorConfig):
@@ -177,16 +176,25 @@ class WeatherDataCollectorActor(Actor):
       if historical_max_model is None and historical_forecast_model is None:
         continue
 
-      self.database_adapter.save_weather_data(
-        icao_code=icao_code,
-        historical_max=historical_max_model,
-        historical_forecast=historical_forecast_model
-      )
+      try:
+        self.database_adapter.save_weather_data(
+          icao_code=icao_code,
+          historical_max=historical_max_model,
+          historical_forecast=historical_forecast_model
+        )
+
+      except Exception as e:
+        self.log.error(
+          message=f"Error saving weather data for {icao_code} into the database: {str(e)}",
+          color=LogColor.RED
+         )
+        continue
 
     self.log.info(
       message=f"Saved weather data for {len(self.cities)} cities into the database",
       color=LogColor.GREEN
     )
+  
   
   # ---- Helper Handlers -----------------------------------
 
@@ -200,13 +208,14 @@ class WeatherDataCollectorActor(Actor):
       The start time for the historical data collection in UTC.
     """
     target_hour = settings.WEATHER_COLLECTOR_SETTINGS.DATA_COLLECTION_TARGET_HOUR
+    target_day = settings.WEATHER_COLLECTOR_SETTINGS.DATA_COLLECTION_INTERVAL_DAYS
 
     current_time_local = Timestamp.now(tz="Asia/Kuala_Lumpur")
     start_time_local = current_time_local.normalize() + Timedelta(hours=target_hour)
 
     if current_time_local >= start_time_local:
-      start_time_local += Timedelta(days=1)
+      start_time_local += Timedelta(days=target_day)
 
-    start_time_utc = start_time_local.tz_convert("UTC").to_pydatetime().replace(tzinfo=None)
+    start_time_utc = start_time_local.tz_convert(timezone.utc).to_pydatetime().replace(tzinfo=None)
     return start_time_utc
   

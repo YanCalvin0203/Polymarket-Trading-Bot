@@ -3,7 +3,7 @@ import json
 import airportsdata
 
 from typing import Any
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from pandas import Timestamp
 from src.models.common import PricingModel
@@ -181,12 +181,12 @@ class WeatherParser:
     forecast_model = WeatherForecastModel(
       forecast_mean=0.0,
       forecast_stdev=0.0,
-      last_updated=Timestamp.now(tz="UTC")
+      last_updated=Timestamp.now(tz=timezone.utc)
     )
     observation_model = WeatherObservationModel(
       observation_current=0.0,
       observation_max=0.0,
-      last_updated=Timestamp.now(tz="UTC")
+      last_updated=Timestamp.now(tz=timezone.utc)
     )
 
     event_model = WeatherEventModel(

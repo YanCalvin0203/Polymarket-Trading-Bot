@@ -4,6 +4,7 @@ from src.settings.common.database import DatabaseConfig
 from src.settings.weather.oracle import WeatherOracleSettings
 from src.settings.weather.slug_builder import WeatherSlugBuilderConfig
 from src.settings.weather.collector import WeatherCollectorSettings
+from src.settings.weather.trainer import WeatherTrainerSettings
 
 
 class MainSettings(BaseSettings):
@@ -16,6 +17,7 @@ class MainSettings(BaseSettings):
   WEATHER_SLUG_BUILDER_CONFIG: WeatherSlugBuilderConfig = WeatherSlugBuilderConfig()
   WEATHER_ORACLE_SETTINGS: WeatherOracleSettings        = WeatherOracleSettings()
   WEATHER_COLLECTOR_SETTINGS: WeatherCollectorSettings  = WeatherCollectorSettings()
+  WEATHER_TRAINER_SETTINGS: WeatherTrainerSettings      = WeatherTrainerSettings()
 
 
 # ---- Public API -------------------------------------

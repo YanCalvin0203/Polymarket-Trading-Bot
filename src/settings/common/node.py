@@ -101,6 +101,18 @@ class NodeConfig(BaseSettings):
     module="data_collector_actor",
     class_name="WeatherDataCollectorActorConfig"
   )
+  WEATHER_PREDICTOR_CALIBRATOR_ACTOR_CONFIG_PATH: str = make_path(
+    package=_ACTOR_PACKAGE,
+    domain="weather",
+    module="predictor_calibrator_actor",
+    class_name="WeatherPredictorCalibratorActorConfig"
+  )
+  WEATHER_PREDICTOR_CALIBRATOR_ACTOR_PATH: str = make_path(
+    package=_ACTOR_PACKAGE,
+    domain="weather",
+    module="predictor_calibrator_actor",
+    class_name="WeatherPredictorCalibratorActor"
+  )
 
   # ---- Polymarket API Credentials ----------------------
 

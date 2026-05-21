@@ -1,15 +1,16 @@
 from sqlalchemy import create_engine, text
 from src.settings import settings
-from pandas import DataFrame
+from pandas import DataFrame, read_sql_query
 from src.models.weather import (
   WeatherHistoricalMaxModel,
-  WeatherHistoricalForecastModel
+  WeatherHistoricalForecastModel,
+  WeatherCalibrationParams
 )
 
 
 # ---- SQL Queries -----------------------------------
 
-CREATE_TABLE_QUERY = text(
+CREATE_DATA_TABLE_QUERY = text(
   """
   CREATE TABLE IF NOT EXISTS weather_data (
     timestamp TIMESTAMPTZ NOT NULL,
@@ -22,14 +23,14 @@ CREATE_TABLE_QUERY = text(
   """
 )
 
-CREATE_INDEX_QUERY = text(
+CREATE_DATA_INDEX_QUERY = text(
   """
   CREATE INDEX IF NOT EXISTS idx_weather_data_lookup 
   ON weather_data (icao_code, timestamp DESC);
   """
 )
 
-UPSERT_QUERY = text(
+UPSERT_DATA_QUERY = text(
   """
   INSERT INTO weather_data (
     timestamp, 
@@ -49,6 +50,57 @@ UPSERT_QUERY = text(
     ensemble_mean = EXCLUDED.ensemble_mean,
     ensemble_stdev = EXCLUDED.ensemble_stdev,
     temperature_2m_max = EXCLUDED.temperature_2m_max;
+  """
+)
+
+LOAD_DATA_QUERY = text(
+  """
+  SELECT timestamp, ensemble_mean, ensemble_stdev, temperature_2m_max
+  FROM weather_data
+  WHERE icao_code = :icao_code
+    AND timestamp >= NOW() - INTERVAL '1 day' * :lookback_days
+  ORDER BY timestamp DESC;
+  """
+)
+
+CREATE_PARAMS_TABLE_QUERY = text(
+  """
+  CREATE TABLE IF NOT EXISTS model_parameters (
+    icao_code VARCHAR(10) NOT NULL,
+    last_updated TIMESTAMPTZ NOT NULL,
+    param_a FLOAT NOT NULL,
+    param_b FLOAT NOT NULL,
+    param_c FLOAT NOT NULL,
+    param_d FLOAT NOT NULL,
+    PRIMARY KEY (icao_code)
+  );
+  """
+)
+
+UPSERT_PARAMS_QUERY = text(
+  """
+  INSERT INTO model_parameters (
+    icao_code, 
+    last_updated, 
+    param_a, 
+    param_b, 
+    param_c, 
+    param_d
+  ) VALUES (
+    :icao_code, 
+    :last_updated, 
+    :param_a, 
+    :param_b, 
+    :param_c, 
+    :param_d
+  )
+  ON CONFLICT (icao_code) 
+  DO UPDATE SET 
+    last_updated = EXCLUDED.last_updated,
+    param_a = EXCLUDED.param_a,
+    param_b = EXCLUDED.param_b,
+    param_c = EXCLUDED.param_c,
+    param_d = EXCLUDED.param_d;
   """
 )
 
@@ -108,7 +160,63 @@ class WeatherPostgresAdapter:
     data_records = payload.to_dict(orient="records")
     
     with self.engine.begin() as connection:
-      connection.execute(UPSERT_QUERY, data_records)
+      connection.execute(UPSERT_DATA_QUERY, data_records)
+
+  def save_model_parameters(self, params: WeatherCalibrationParams) -> None:
+    """
+    This function saves the calibrated model parameters to the Postgres database.
+
+    Parameters:
+    ----------------
+    params (WeatherCalibrationParams): 
+      The calibrated model parameters to be saved.
+    """
+    with self.engine.begin() as connection:
+      connection.execute(
+        UPSERT_PARAMS_QUERY,
+        {
+          "icao_code": params.icao_code,
+          "last_updated": params.last_updated,
+          "param_a": params.a,
+          "param_b": params.b,
+          "param_c": params.c,
+          "param_d": params.d
+        }
+      )
+
+  def load_weather_data(
+    self, 
+    icao_code: str, 
+    lookback_days: int
+  ) -> DataFrame:
+    """
+    This function loads the weather data from the Postgres database for a given
+    ICAO code and lookback period.
+
+    Parameters:
+    ----------------
+    icao_code (str): 
+      The ICAO code of the city for which to load the weather data.
+
+    lookback_days (int): 
+      The number of days to look back for the weather data.
+
+    Returns:
+    ----------------
+    DataFrame:
+      A DataFrame containing the weather data for the specified ICAO code and lookback 
+      period.
+    """
+    with self.engine.connect() as connection:
+      return read_sql_query(
+        sql=LOAD_DATA_QUERY,
+        con=connection,
+        params={
+          "icao_code": icao_code,
+          "lookback_days": lookback_days
+        },
+        parse_dates=["timestamp"]
+      )
 
 
   # ---- Internal Helpers ----------------------------
@@ -119,8 +227,9 @@ class WeatherPostgresAdapter:
     does not already exist.
     """
     with self.engine.begin() as connection:
-      connection.execute(CREATE_TABLE_QUERY)
-      connection.execute(CREATE_INDEX_QUERY)
+      connection.execute(CREATE_DATA_TABLE_QUERY)
+      connection.execute(CREATE_DATA_INDEX_QUERY)
+      connection.execute(CREATE_PARAMS_TABLE_QUERY)
 
   def _combine_historical_data(
     self, 

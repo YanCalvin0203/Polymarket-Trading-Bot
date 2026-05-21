@@ -63,6 +63,10 @@ class WeatherStateActor(Actor):
       handler=self._on_data_collection_status
     )
     self.msgbus.register(
+      endpoint=WeatherEndpoint.WEATHER_MODEL_TRAINING_STATUS.value,
+      handler=self._on_model_training_status
+    )
+    self.msgbus.register(
       endpoint=WeatherEndpoint.WEATHER_FORECAST_UPDATE.value,
       handler=self._on_forecast_update
     )
@@ -110,6 +114,10 @@ class WeatherStateActor(Actor):
     self.msgbus.deregister(
       endpoint=WeatherEndpoint.WEATHER_DATA_COLLECTION_STATUS.value,
       handler=self._on_data_collection_status
+    )
+    self.msgbus.deregister(
+      endpoint=WeatherEndpoint.WEATHER_MODEL_TRAINING_STATUS.value,
+      handler=self._on_model_training_status
     )
     self.msgbus.deregister(
       endpoint=WeatherEndpoint.WEATHER_FORECAST_UPDATE.value,
@@ -252,3 +260,28 @@ class WeatherStateActor(Actor):
         endpoint=WeatherEndpoint.WEATHER_DATA_COLLECTION_REQUEST.value,
         msg=self.cities,
       )
+
+  def _on_model_training_status(self, status: Status) -> None:
+    """
+    This function is called when a model training status message is received.
+
+    Parameters
+    ----------------
+    status (Status): 
+      The model training status message.
+    """
+    self.log.debug(
+      message=f"Received model training status: {status.value}",
+      color=LogColor.CYAN
+    )
+
+    if status == Status.READY:
+      self.log.info(
+        message=f"Sending {len(self.manifests)} unique cities for model training...",
+        color=LogColor.NORMAL
+      )
+      self.msgbus.send(
+        endpoint=WeatherEndpoint.WEATHER_MODEL_TRAINING_REQUEST.value,
+        msg=self.cities,
+      )
+      
