@@ -8,7 +8,7 @@ class WeatherOracleSettings:
   # ---- Ensemble ----------------------------------------
 
   ENSEMBLE_COUNT: int = 51
-  HISTORICAL_MAX_DAYS: int = 1
+  HISTORICAL_RANGE_DAYS: int = 1
 
   ENSEMBLE_FORECAST_ENDPOINT: str = "https://ensemble-api.open-meteo.com/v1/ensemble"
   ENSEMBLE_FORECAST_QUERY_PARAMS: dict[str, Any] = {

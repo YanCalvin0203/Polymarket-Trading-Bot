@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from pandas import DataFrame
+from src.enums.weather.units import TemperatureUnit
 
 
 @dataclass(slots=True)
@@ -110,6 +111,7 @@ class LocationModel:
   city_name: str
   icao_code: str
   timezone: str
+  temperature_unit: TemperatureUnit
   latitude: float
   longitude: float
 
@@ -127,9 +129,10 @@ class LocationModel:
     """
     return (
       f"---- Location Model -------------------------\n"
-      f"city_name:  {self.city_name},\n"
-      f"icao_code:  {self.icao_code},\n"
-      f"timezone:   {self.timezone},\n"
-      f"latitude:   {self.latitude},\n"
-      f"longitude:  {self.longitude}\n"
+      f"city_name:        {self.city_name},\n"
+      f"icao_code:        {self.icao_code},\n"
+      f"timezone:         {self.timezone},\n"
+      f"temperature_unit: {self.temperature_unit.api_value},\n"
+      f"latitude:         {self.latitude},\n"
+      f"longitude:        {self.longitude}\n"
     )

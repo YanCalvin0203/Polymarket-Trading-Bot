@@ -9,7 +9,9 @@ dependencies = [
     "nautilus-trader[polymarket]>=1.226.0",
     "openmeteo-requests>=1.7.5",
     "pandas>=2.3.3",
+    "psycopg2-binary>=2.9.12",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.1",
     "retry-requests>=2.0.0",
+    "sqlalchemy>=2.0.49",
 ]

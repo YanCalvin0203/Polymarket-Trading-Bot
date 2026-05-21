@@ -35,6 +35,7 @@ class WeatherStateActor(Actor):
     super().__init__(config)
     self.events = {}
     self.manifests = {}
+    self.cities = {}
     self.parser = WeatherParser()
     
 
@@ -42,7 +43,7 @@ class WeatherStateActor(Actor):
 
   def on_start(self) -> None:
     """
-    This method is called when the actor is started.
+    This function is called when the actor is started.
     """
     self.log.info(
       message="Registering endpoints...", 
@@ -56,6 +57,10 @@ class WeatherStateActor(Actor):
     self.msgbus.register(
       endpoint=WeatherEndpoint.WEATHER_OBSERVATION_STATUS.value,
       handler=self._on_observation_status
+    )
+    self.msgbus.register(
+      endpoint=WeatherEndpoint.WEATHER_DATA_COLLECTION_STATUS.value,
+      handler=self._on_data_collection_status
     )
     self.msgbus.register(
       endpoint=WeatherEndpoint.WEATHER_FORECAST_UPDATE.value,
@@ -78,6 +83,7 @@ class WeatherStateActor(Actor):
     all_instruments = self.cache.instruments()
     self.events = self.parser.parse_instruments(all_instruments)
     self.manifests = self.parser.parse_manifests(self.events)
+    self.cities = self.parser.parse_cities(self.events)
 
     self.log.info(
       message=f"Parsed {len(self.events)} events and {len(self.manifests)} manifests successfully",
@@ -86,7 +92,7 @@ class WeatherStateActor(Actor):
 
   def on_stop(self) -> None:
     """
-    This method is called when the actor is stopped.
+    This function is called when the actor is stopped.
     """
     self.log.info(
       message="Deregistering endpoints...", 
@@ -100,6 +106,10 @@ class WeatherStateActor(Actor):
     self.msgbus.deregister(
       endpoint=WeatherEndpoint.WEATHER_OBSERVATION_STATUS.value,
       handler=self._on_observation_status
+    )
+    self.msgbus.deregister(
+      endpoint=WeatherEndpoint.WEATHER_DATA_COLLECTION_STATUS.value,
+      handler=self._on_data_collection_status
     )
     self.msgbus.deregister(
       endpoint=WeatherEndpoint.WEATHER_FORECAST_UPDATE.value,
@@ -123,7 +133,7 @@ class WeatherStateActor(Actor):
       forecast_update: dict[str, WeatherForecastModel]
     ) -> None:
     """
-    This method is called when a forecast update message is received.
+    This function is called when a forecast update message is received.
 
     Parameters
     ----------------
@@ -149,7 +159,7 @@ class WeatherStateActor(Actor):
       observation_update: dict[str, WeatherObservationModel]
     ) -> None:
     """
-    This method is called when an observation update message is received.
+    This function is called when an observation update message is received.
 
     Parameters
     ----------------
@@ -172,7 +182,7 @@ class WeatherStateActor(Actor):
 
   def _on_forecast_status(self, status: Status) -> None:
     """
-    This method is called when a forecast status message is received.
+    This function is called when a forecast status message is received.
 
     Parameters
     ----------------
@@ -197,7 +207,7 @@ class WeatherStateActor(Actor):
 
   def _on_observation_status(self, status: Status) -> None:
     """
-    This method is called when an observation status message is received.
+    This function is called when an observation status message is received.
 
     Parameters
     ----------------
@@ -217,4 +227,28 @@ class WeatherStateActor(Actor):
       self.msgbus.send(
         endpoint=WeatherEndpoint.WEATHER_OBSERVATION_REQUEST.value,
         msg=self.manifests,
+      )
+
+  def _on_data_collection_status(self, status: Status) -> None:
+    """
+    This function is called when a data collection status message is received.
+
+    Parameters
+    ----------------
+    status (Status): 
+      The data collection status message.
+    """
+    self.log.debug(
+      message=f"Received data collection status: {status.value}",
+      color=LogColor.CYAN
+    )
+
+    if status == Status.READY:
+      self.log.info(
+        message=f"Sending {len(self.manifests)} unique cities for data collection...",
+        color=LogColor.NORMAL
+      )
+      self.msgbus.send(
+        endpoint=WeatherEndpoint.WEATHER_DATA_COLLECTION_REQUEST.value,
+        msg=self.cities,
       )

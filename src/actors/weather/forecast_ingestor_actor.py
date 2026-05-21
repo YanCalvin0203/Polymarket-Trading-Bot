@@ -37,7 +37,7 @@ class WeatherForecastIngestorActor(Actor):
 
   def on_start(self) -> None:
     """
-    This method is called when the actor is started.
+    This function is called when the actor is started.
     """
     self.log.info(
       message="Registering endpoints...", 
@@ -66,7 +66,7 @@ class WeatherForecastIngestorActor(Actor):
 
   def on_stop(self) -> None:
     """
-    This method is called when the actor is stopped.
+    This function is called when the actor is stopped.
     """
     self.log.info(
       message="Deregistering endpoints...", 
@@ -88,7 +88,7 @@ class WeatherForecastIngestorActor(Actor):
 
   def _on_receive_forecast_request(self, manifests: dict[str, WeatherManifestModel]) -> None:
     """
-    This method is called when a weather forecasts request is received.
+    This function is called when a weather forecasts request is received.
 
     Parameters:
     ----------------

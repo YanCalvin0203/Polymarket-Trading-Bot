@@ -18,7 +18,6 @@ class WeatherEventModel:
 
   # ---- Weather specific attributes ---------------------
   location: LocationModel
-  temperature_unit: TemperatureUnit
   resolution_time: datetime
   resolution_source: str
 
@@ -45,9 +44,9 @@ class WeatherEventModel:
       f"city_name:            {self.location.city_name},\n"
       f"icao_code:            {self.location.icao_code},\n"
       f"timezone:             {self.location.timezone},\n"
+      f"temperature_unit:     {self.location.temperature_unit.api_value},\n"
       f"latitude:             {self.location.latitude},\n"
       f"longitude:            {self.location.longitude},\n"
-      f"temperature_unit:     {self.temperature_unit.api_value},\n"
       f"resolution_time:      {self.resolution_time},\n"
       f"resolution_source:    {self.resolution_source})\n"
       f"forecast_mean:        {self.forecast.forecast_mean},\n"

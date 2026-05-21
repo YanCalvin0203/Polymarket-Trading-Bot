@@ -108,15 +108,42 @@ class WeatherParser:
     dict[str, WeatherManifestModel]: 
       The parsed and structured dictionary of manifest data.
     """
-    manifest = {}
+    manifests = {}
     for event_id, event_model in events_dict.items():
       manifest_model = self._parse_single_manifest(event_model)
       if manifest_model is None:
         continue 
 
-      manifest[event_id] = manifest_model
+      manifests[event_id] = manifest_model
 
-    return manifest
+    return manifests
+  
+  def parse_cities(
+    self,
+    events_dict: dict[str, WeatherEventModel]
+  ) -> dict[str, LocationModel]:
+    """
+    This function parses event models into a dictionary of structured city data.
+
+    Parameters
+    --------------
+    events_dict (dict[str, WeatherEventModel]): 
+      The dictionary of event models to parse city data for.
+
+    Returns
+    --------------
+    dict[str, LocationModel]: 
+      The parsed and structured dictionary of city data.
+    """
+    cities = {}
+    for event_model in events_dict.values():
+      icao_code = event_model.location.icao_code
+      if cities.get(icao_code, None) is not None:
+        continue
+
+      cities[icao_code] = event_model.location
+
+    return cities
   
   # ---- Internal Helpers ----------------------------
 
@@ -146,6 +173,7 @@ class WeatherParser:
       city_name=self._parse_city_name(raw_instrument),
       icao_code=self._parse_icao_code(raw_instrument),
       timezone=self._parse_timezone(raw_instrument),
+      temperature_unit=self._parse_temperature_unit(raw_instrument),
       latitude=latitude,
       longitude=longitude
     )
@@ -168,7 +196,6 @@ class WeatherParser:
 
       # ---- Weather specific attributes ---------------------
       location=location_model,
-      temperature_unit=self._parse_temperature_unit(raw_instrument),
       resolution_time=self._parse_resolution_time(raw_instrument),
       resolution_source=raw_instrument.get("resolutionSource", None),
       forecast=forecast_model,
@@ -255,7 +282,6 @@ class WeatherParser:
       
     manifest_model = WeatherManifestModel(
       location=event_model.location,
-      temperature_unit=event_model.temperature_unit,
       resolution_time=event_model.resolution_time,
       observation_max=observation_max
     )
@@ -282,10 +308,10 @@ class WeatherParser:
     if location_model.city_name == "" or location_model.icao_code == "":
       return False
     
-    if location_model.latitude is None or location_model.longitude is None:
+    if location_model.timezone == "" or location_model.temperature_unit is None:
       return False
     
-    if location_model.timezone == "":
+    if location_model.latitude is None or location_model.longitude is None:
       return False
 
     return True
@@ -304,7 +330,7 @@ class WeatherParser:
     bool: 
       True if the event model is valid, False otherwise.
     """
-    if event_model.event_id == "" or event_model.temperature_unit is None:
+    if event_model.event_id == "":
       return False
     
     if event_model.resolution_time is None or event_model.resolution_source is None:
@@ -351,7 +377,7 @@ class WeatherParser:
     bool: 
       True if the manifest model is valid, False otherwise.
     """
-    if manifest_model.temperature_unit is None or manifest_model.resolution_time is None:
+    if manifest_model.resolution_time is None:
       return False
     
     if not self._is_location_valid(manifest_model.location):

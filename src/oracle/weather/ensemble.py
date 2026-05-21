@@ -12,7 +12,8 @@ from src.models.weather import (
   WeatherHistoricalForecastModel,
   WeatherHistoricalMaxModel,
   WeatherForecastModel,
-  WeatherManifestModel
+  WeatherManifestModel,
+  LocationModel
 )
 
 
@@ -61,7 +62,7 @@ class WeatherEnsemble:
   
   def get_historical_max(
       self,
-      manifests: dict[str, WeatherManifestModel],
+      cities: dict[str, LocationModel],
       historical_range_days: int = 1
     ) -> dict[str, WeatherHistoricalMaxModel]:
     """
@@ -70,11 +71,11 @@ class WeatherEnsemble:
 
     Parameters
     --------------
-    manifests (dict[str, WeatherManifestModel]): 
-      The weather manifests for which to get the historical maximum temperatures.
+    cities (dict[str, LocationModel]): 
+      The weather locations for which to get the historical maximum temperatures.
 
     historical_range_days (int):
-      The number of days prior to the manifest's resolution time to include in 
+      The number of days prior to the location's resolution time to include in 
       the historical maximum temperature calculation. Defaults to 1 days.
 
     Returns
@@ -82,12 +83,10 @@ class WeatherEnsemble:
     dict[str, WeatherHistoricalMaxModel]: 
       The retrieved historical maximum temperatures, keyed by ICAO code.
     """
-    cities = self._filter_unique_cities(manifests=manifests)
-
     historical_max = {}
-    for icao_code, manifest_model in cities.items():
+    for icao_code, location_model in cities.items():
       historical_max_model = self._get_single_historical_max(
-        manifest=manifest_model,
+        location=location_model,
         historical_range_days=historical_range_days
       )
       if historical_max_model is not None:
@@ -97,19 +96,19 @@ class WeatherEnsemble:
   
   def get_historical_forecasts(
     self,
-    manifests: dict[str, WeatherManifestModel],
+    cities: dict[str, LocationModel],
     historical_range_days: int = 1
   ) -> dict[str, WeatherHistoricalForecastModel]:
     """
-    This function retrieves the historical forecasts for the given manifests.
+    This function retrieves the historical forecasts for the given locations.
 
     Parameters
     --------------
-    manifests (dict[str, WeatherManifestModel]): 
-      The weather manifests for which to get the historical forecasts.
+    cities (dict[str, LocationModel]): 
+      The weather locations for which to get the historical forecasts.
 
     historical_range_days (int):
-      The number of days prior to the manifest's resolution time to include in 
+      The number of days prior to the location's resolution time to include in 
       the historical forecast calculation. Defaults to 1 days.
 
     Returns
@@ -117,12 +116,10 @@ class WeatherEnsemble:
     dict[str, WeatherHistoricalForecastModel]: 
       The retrieved historical forecasts, keyed by ICAO code.
     """
-    cities = self._filter_unique_cities(manifests=manifests)
-
     historical_forecasts = {}
-    for icao_code, manifest_model in cities.items():
+    for icao_code, location_model in cities.items():
       historical_forecast_model = self._get_single_historical_forecast(
-        manifest=manifest_model,
+        location=location_model,
         historical_range_days=historical_range_days
       )
       if historical_forecast_model is not None:
@@ -152,8 +149,10 @@ class WeatherEnsemble:
     """
     try:
       params = self._build_query_params(
-        manifest=manifest,
-        initial_params=settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_FORECAST_QUERY_PARAMS
+        location=manifest.location,
+        initial_params=settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_FORECAST_QUERY_PARAMS,
+        start_date=manifest.resolution_time,
+        end_date=manifest.resolution_time
       )
       response = self._request_ensemble_data(
         params=params, 
@@ -164,7 +163,7 @@ class WeatherEnsemble:
       
       forecast_mean, forecast_stdev = self._get_forecast_stats(
         response=response,
-        manifest=manifest
+        location=manifest.location
       )
       forecast_model = WeatherForecastModel(
         forecast_mean=forecast_mean,
@@ -178,21 +177,21 @@ class WeatherEnsemble:
     
   def _get_single_historical_max(
     self,
-    manifest: WeatherManifestModel,
+    location: LocationModel,
     historical_range_days: int
   ) -> WeatherHistoricalMaxModel | None:
     """
     This function gets a single historical maximum temperature for a 
-    given manifest.
+    given location.
 
     Parameters
     --------------
-    manifest (WeatherManifestModel): 
-      The weather manifest for which to get the historical maximum 
+    location (LocationModel): 
+      The weather location for which to get the historical maximum 
       temperature.
 
     historical_range_days (int):
-      The number of days prior to the manifest's resolution time to include in 
+      The number of days prior to the location's resolution time to include in 
       the historical maximum temperature calculation.
 
     Returns
@@ -202,12 +201,12 @@ class WeatherEnsemble:
       request fails.
     """
     try:
-      current_local_date = Timestamp.now(tz=manifest.location.timezone).normalize()
+      current_local_date = Timestamp.now(tz=location.timezone).normalize()
       start_date = current_local_date - Timedelta(days=historical_range_days)
       end_date = current_local_date - Timedelta(days=1)
 
       params = self._build_query_params(
-        manifest=manifest,
+        location=location,
         initial_params=settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_ARCHIVE_QUERY_PARAMS,
         start_date=start_date,
         end_date=end_date
@@ -221,7 +220,7 @@ class WeatherEnsemble:
       
       historical_max_df = self._get_historical_max_df(
         response=response,
-        manifest=manifest
+        location=location
       )
       historical_max_model = WeatherHistoricalMaxModel(
         historical_max_data=historical_max_df,
@@ -234,19 +233,19 @@ class WeatherEnsemble:
     
   def _get_single_historical_forecast(
     self, 
-    manifest: WeatherManifestModel,
+    location: LocationModel,
     historical_range_days: int
   ) -> WeatherHistoricalForecastModel | None:
     """
-    This function gets a single historical forecast for a given manifest.
+    This function gets a single historical forecast for a given location.
 
     Parameters
     --------------
-    manifest (WeatherManifestModel): 
-      The weather manifest for which to get the historical forecast.
-    
+    location (LocationModel): 
+      The weather location for which to get the historical forecast.
+
     historical_range_days (int):
-      The number of days prior to the manifest's resolution time to include in 
+      The number of days prior to the location's resolution time to include in 
       the historical forecast calculation.
 
     Returns
@@ -255,12 +254,12 @@ class WeatherEnsemble:
       The structured historical forecast data, or None if the request fails.
     """
     try:
-      current_local_date = Timestamp.now(tz=manifest.location.timezone).normalize()
+      current_local_date = Timestamp.now(tz=location.timezone).normalize()
       start_date = current_local_date - Timedelta(days=historical_range_days)
       end_date = current_local_date - Timedelta(days=1)
 
       params = self._build_query_params(
-        manifest=manifest,
+        location=location,
         initial_params=settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_HISTORICAL_FORECAST_QUERY_PARAMS,
         start_date=start_date,
         end_date=end_date
@@ -274,7 +273,7 @@ class WeatherEnsemble:
       
       historical_forecast_df = self._get_historical_forecast_df(
         response=response,
-        manifest=manifest
+        location=location
       )
       historical_forecast_model = WeatherHistoricalForecastModel(
         historical_forecast_data=historical_forecast_df,
@@ -287,29 +286,27 @@ class WeatherEnsemble:
 
   def _build_query_params(
     self, 
-    manifest: WeatherManifestModel,
+    location: LocationModel,
     initial_params: dict[str, Any],
-    start_date: Timestamp | None = None,
-    end_date: Timestamp | None = None
+    start_date: Timestamp,
+    end_date: Timestamp
   ) -> dict[str, Any]:
     """
     This function builds the query parameters for the ensemble API request.
 
     Parameters
     --------------
-    manifest (WeatherManifestModel): 
-      The weather manifest for which to build the query parameters.
+    location (LocationModel): 
+      The weather location for which to build the query parameters.
 
     initial_params (dict[str, Any]): 
       The initial query parameters.
 
     start_date (Timestamp | None):
-      The start date for the forecast data. If None, defaults to the manifest's 
-      resolution time.
+      The start date for the forecast data.
 
     end_date (Timestamp | None):
-      The end date for the forecast data. If None, defaults to the manifest's 
-      resolution time.
+      The end date for the forecast data.
 
     Returns
     --------------
@@ -317,12 +314,9 @@ class WeatherEnsemble:
       The query parameters for the ensemble API request.
     """
     params = initial_params.copy()
-    params["latitude"] = manifest.location.latitude
-    params["longitude"] = manifest.location.longitude
-    params["temperature_unit"] = manifest.temperature_unit.api_value
-
-    start_date = start_date or manifest.resolution_time
-    end_date = end_date or manifest.resolution_time
+    params["latitude"] = location.latitude
+    params["longitude"] = location.longitude
+    params["temperature_unit"] = location.temperature_unit.api_value
 
     params["start_date"] = start_date.strftime('%Y-%m-%d')
     params["end_date"] = end_date.strftime('%Y-%m-%d')
@@ -365,7 +359,7 @@ class WeatherEnsemble:
   def _get_forecast_stats(
     self, 
     response: WeatherApiResponse, 
-    manifest: WeatherManifestModel
+    location: LocationModel
   ) -> tuple[float, float]:
     """
     This function calculates forecast statistics from the raw API response.
@@ -375,8 +369,8 @@ class WeatherEnsemble:
     response (WeatherApiResponse): 
       The raw response data from the API.
 
-    manifest (WeatherManifestModel): 
-      The weather manifest for which to calculate statistics.
+    location (LocationModel): 
+      The weather location for which to calculate statistics.
 
     Returns
     --------------
@@ -392,7 +386,7 @@ class WeatherEnsemble:
       freq=Timedelta(seconds=hourly.Interval()),
       inclusive="left"
     )   
-    timestamps = timestamps.tz_convert(manifest.location.timezone)
+    timestamps = timestamps.tz_convert(location.timezone)
 
     # Retrieve the ensemble member forecasts and build the numpy array
     ensemble_count = settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_COUNT
@@ -414,7 +408,7 @@ class WeatherEnsemble:
   def _get_historical_max_df(
     self,
     response: WeatherApiResponse,
-    manifest: WeatherManifestModel
+    location: LocationModel
   ) -> DataFrame:
     """
     This function processes the raw API response to extract the historical 
@@ -425,8 +419,8 @@ class WeatherEnsemble:
     response (WeatherApiResponse): 
       The raw response data from the API.
 
-    manifest (WeatherManifestModel): 
-      The weather manifest for which to extract the historical maximum 
+    location (LocationModel): 
+      The weather location for which to extract the historical maximum 
       temperatures.
 
     Returns
@@ -444,7 +438,7 @@ class WeatherEnsemble:
       periods=len(data),
       freq=Timedelta(seconds=daily.Interval()),
     )   
-    dates = timestamps.tz_convert(manifest.location.timezone).normalize()
+    dates = timestamps.tz_convert(location.timezone).normalize()
 
     # Build the dataframe
     df = DataFrame(
@@ -458,7 +452,7 @@ class WeatherEnsemble:
   def _get_historical_forecast_df(
     self,
     response: WeatherApiResponse,
-    manifest: WeatherManifestModel
+    location: LocationModel
   ) -> DataFrame:
     """
     This function processes the raw API response to extract the historical 
@@ -469,8 +463,8 @@ class WeatherEnsemble:
     response (WeatherApiResponse): 
       The raw response data from the API.
 
-    manifest (WeatherManifestModel):
-      The weather manifest for which to extract the historical forecasts.
+    location (LocationModel):
+      The weather location for which to extract the historical forecasts.
 
     Returns
     --------------
@@ -486,7 +480,7 @@ class WeatherEnsemble:
       freq=Timedelta(seconds=hourly.Interval()),
       inclusive="left"
     )   
-    timestamps = timestamps.tz_convert(manifest.location.timezone)
+    timestamps = timestamps.tz_convert(location.timezone)
 
     # Retrieve the ensemble member historical forecasts and build the numpy array
     ensemble_count = settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_COUNT
@@ -503,38 +497,10 @@ class WeatherEnsemble:
     daily_member_max_df: DataFrame = df.groupby(df.index.date).max()
 
     # Restore the index timezone typing to stay uniform across your app
-    daily_member_max_df.index = to_datetime(daily_member_max_df.index).tz_localize(manifest.location.timezone)
+    daily_member_max_df.index = to_datetime(daily_member_max_df.index).tz_localize(location.timezone)
 
     summary_df = DataFrame(index=daily_member_max_df.index)
     summary_df["ensemble_mean"] = daily_member_max_df.mean(axis=1)
     summary_df["ensemble_stdev"] = daily_member_max_df.std(axis=1)
 
     return summary_df
-
-  def _filter_unique_cities(
-    self, 
-    manifests: dict[str, WeatherManifestModel]
-  ) -> dict[str, WeatherManifestModel]:
-    """
-    This function filters the manifests to obtain the unique cities.
-
-    Parameters
-    --------------
-    manifests (dict[str, WeatherManifestModel]): 
-      The weather manifests for which to get the unique cities.
-
-    Returns
-    --------------
-    dict[str, WeatherManifestModel]: 
-      The dictionary of unique cities, keyed by ICAO code.
-    """
-    unique_cities = {}
-    for manifest_model in manifests.values():
-      city_name = manifest_model.location.icao_code
-      if unique_cities.get(city_name, None) is not None:
-        continue
-
-      unique_cities[city_name] = manifest_model
-
-    return unique_cities
-  

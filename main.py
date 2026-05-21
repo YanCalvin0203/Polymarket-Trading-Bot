@@ -71,6 +71,11 @@ def main() -> None:
     config_path=settings.NODE_CONFIG.WEATHER_OBSERVATION_INGESTOR_ACTOR_CONFIG_PATH,
     config={}
   )
+  weather_data_collector_actor_config = ImportableActorConfig(
+    actor_path=settings.NODE_CONFIG.WEATHER_DATA_COLLECTOR_ACTOR_PATH,
+    config_path=settings.NODE_CONFIG.WEATHER_DATA_COLLECTOR_ACTOR_CONFIG_PATH,
+    config={}
+  )
 
   # ---- Client Configurations ----------------------
 
@@ -94,6 +99,7 @@ def main() -> None:
       # ---- Component Actors ----------------------------
       weather_forecast_ingestor_actor_config,
       weather_observation_ingestor_actor_config,
+      weather_data_collector_actor_config,
     ]
   )
 
@@ -101,7 +107,7 @@ def main() -> None:
   # ---- Engine Setup And Execution -----------------
 
   node = TradingNode(
-    config=node_config
+    config=node_config,
   )
   node.add_data_client_factory(
     name=settings.NODE_CONFIG.WEATHER_CLIENT_NAME, 

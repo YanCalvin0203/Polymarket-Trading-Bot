@@ -8,7 +8,8 @@ from src.enums.weather import TemperatureUnit
 from src.utils.temperature_converter import to_farenheit
 from src.models.weather import (
   WeatherObservationModel,
-  WeatherManifestModel
+  WeatherManifestModel,
+  LocationModel
 )
 
 
@@ -65,7 +66,7 @@ class WeatherMetar:
       The structured observation data, or None if the request fails.
     """
     try:
-      params = self._build_query_params(manifest=manifest)
+      params = self._build_query_params(location=manifest.location)
       response = self._request_observation_data(params=params)
       if not response:
         return None
@@ -73,7 +74,7 @@ class WeatherMetar:
       data: dict[str, Any] = response[0]
       current_temperature = self._get_current_temperature(
         data=data, 
-        manifest=manifest
+        location=manifest.location
       )
       if current_temperature is None:
         return None
@@ -92,14 +93,14 @@ class WeatherMetar:
     except Exception as e:
       return None
 
-  def _build_query_params(self, manifest: WeatherManifestModel) -> dict[str, Any]:
+  def _build_query_params(self, location: LocationModel) -> dict[str, Any]:
     """
     This function builds the query parameters for the METAR API request.
 
     Parameters
     --------------
-    manifest (WeatherManifestModel): 
-      The weather manifest for which to build the query parameters.
+    location (LocationModel): 
+      The weather location for which to build the query parameters.
 
     Returns
     --------------
@@ -107,7 +108,7 @@ class WeatherMetar:
       The query parameters for the METAR API request.
     """
     params = settings.WEATHER_ORACLE_SETTINGS.METAR_QUERY_PARAMS.copy()
-    params["ids"] = manifest.location.icao_code
+    params["ids"] = location.icao_code
 
     return params
   
@@ -141,7 +142,7 @@ class WeatherMetar:
   def _get_current_temperature(
     self, 
     data: dict[str, Any], 
-    manifest: WeatherManifestModel
+    location: LocationModel
   ) -> float | None:
     """
     This function extracts the current temperature from the raw API response data
@@ -152,8 +153,8 @@ class WeatherMetar:
     data (dict[str, Any]): 
       The raw response data from the API.
       
-    manifest (WeatherManifestModel): 
-      The weather manifest for which to get the temperature.
+    location (LocationModel): 
+      The weather location for which to get the temperature.
 
     Returns
     --------------
@@ -165,7 +166,7 @@ class WeatherMetar:
       return None
     
     # Convert the temperature unit if necessary (initial response at Celsius)
-    if manifest.temperature_unit.api_value == TemperatureUnit.FAHRENHEIT.api_value:
+    if location.temperature_unit.api_value == TemperatureUnit.FAHRENHEIT.api_value:
       current_temperature = to_farenheit(current_temperature)
 
     return current_temperature

@@ -89,6 +89,18 @@ class NodeConfig(BaseSettings):
     module="observation_ingestor_actor",
     class_name="WeatherObservationIngestorActorConfig"
   )
+  WEATHER_DATA_COLLECTOR_ACTOR_PATH: str = make_path(
+    package=_ACTOR_PACKAGE,
+    domain="weather",
+    module="data_collector_actor",
+    class_name="WeatherDataCollectorActor"
+  )
+  WEATHER_DATA_COLLECTOR_ACTOR_CONFIG_PATH: str = make_path(
+    package=_ACTOR_PACKAGE,
+    domain="weather",
+    module="data_collector_actor",
+    class_name="WeatherDataCollectorActorConfig"
+  )
 
   # ---- Polymarket API Credentials ----------------------
 
@@ -115,7 +127,7 @@ class NodeConfig(BaseSettings):
 
   def inject_to_env(self) -> None:
     """
-    This method injects the configuration variables into the environment variables.
+    This function injects the configuration variables into the environment variables.
     """
     env_prefix = self.model_config.get("env_prefix", "")
     dump = self.model_dump(
