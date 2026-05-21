@@ -56,8 +56,8 @@ class WeatherPredictorCalibratorActor(Actor):
     )
 
     self.msgbus.register(
-      endpoint=WeatherEndpoint.WEATHER_MODEL_TRAINING_REQUEST.value,
-      handler=self._on_receive_model_training_request
+      endpoint=WeatherEndpoint.WEATHER_MODEL_CALIBRATION_REQUEST.value,
+      handler=self._on_receive_model_calibration_request
     )
 
     self.log.info(
@@ -70,10 +70,10 @@ class WeatherPredictorCalibratorActor(Actor):
     )
 
     self.clock.set_timer(
-      name=WeatherTimer.WEATHER_MODEL_TRAINING_TIMER.value,
+      name=WeatherTimer.WEATHER_MODEL_CALIBRATION_TIMER.value,
       start_time=self._calculate_start_time(),
-      interval=Timedelta(days=settings.WEATHER_TRAINER_SETTINGS.DATA_TRAINING_INTERVAL_DAYS),
-      callback=self._on_model_training_timer,
+      interval=Timedelta(days=settings.WEATHER_CALIBRATOR_SETTINGS.DATA_CALIBRATION_INTERVAL_DAYS),
+      callback=self._on_model_calibration_timer,
       fire_immediately=True
     )
 
@@ -84,7 +84,7 @@ class WeatherPredictorCalibratorActor(Actor):
 
     # Notify WeatherStateActor that this ingestor is ready to receive requests
     self.msgbus.send(
-      endpoint=WeatherEndpoint.WEATHER_MODEL_TRAINING_STATUS.value,
+      endpoint=WeatherEndpoint.WEATHER_MODEL_CALIBRATION_STATUS.value,
       msg=Status.READY
     )
 
@@ -98,8 +98,8 @@ class WeatherPredictorCalibratorActor(Actor):
     )
 
     self.msgbus.deregister(
-      endpoint=WeatherEndpoint.WEATHER_MODEL_TRAINING_REQUEST.value,
-      handler=self._on_receive_model_training_request
+      endpoint=WeatherEndpoint.WEATHER_MODEL_CALIBRATION_REQUEST.value,
+      handler=self._on_receive_model_calibration_request
     )
 
     self.log.info(
@@ -112,7 +112,7 @@ class WeatherPredictorCalibratorActor(Actor):
     )
 
     self.clock.cancel_timer(
-      name=WeatherTimer.WEATHER_MODEL_TRAINING_TIMER.value
+      name=WeatherTimer.WEATHER_MODEL_CALIBRATION_TIMER.value
     )
 
     self.log.info(
@@ -123,25 +123,25 @@ class WeatherPredictorCalibratorActor(Actor):
 
   # ---- Message Handlers ----------------------------------
 
-  def _on_receive_model_training_request(self, cities: dict[str, LocationModel]) -> None:
+  def _on_receive_model_calibration_request(self, cities: dict[str, LocationModel]) -> None:
     """
-    This function is called when a weather model training request is received.
+    This function is called when a weather model calibration request is received.
 
     Parameters:
     ----------------
     cities (dict[str, LocationModel]): 
-      The dictionary of cities for which to train the model.
+      The dictionary of cities for which to calibrate the model.
     """
     self.log.debug(
-      message=f"Received {len(cities)} unique cities for model training",
+      message=f"Received {len(cities)} unique cities for model calibration",
       color=LogColor.CYAN
     )
 
     self.cities = cities
 
-  def _on_model_training_timer(self, event: TimeEvent) -> None:
+  def _on_model_calibration_timer(self, event: TimeEvent) -> None:
     """
-    This function is called when the weather model training timer 
+    This function is called when the weather model calibration timer 
     expires.
 
     Parameters:
@@ -150,19 +150,19 @@ class WeatherPredictorCalibratorActor(Actor):
       The timer event.
     """
     self.log.info(
-      message=f"Retrieving weather training data for {len(self.cities)} cities from database...",
+      message=f"Retrieving weather calibration data for {len(self.cities)} cities from database...",
       color=LogColor.NORMAL
     )
 
-    # Retrieve the training data for each city from the database
-    training_data = {}
+    # Retrieve the calibration data for each city from the database
+    calibration_data = {}
     for icao_code in self.cities.keys():
       try:
-        city_training_data = self.database_adapter.load_weather_data(
+        city_calibration_data = self.database_adapter.load_weather_data(
           icao_code=icao_code,
-          lookback_days=settings.WEATHER_TRAINER_SETTINGS.DATA_TRAINING_LOOKBACK_DAYS
+          lookback_days=settings.WEATHER_CALIBRATOR_SETTINGS.DATA_CALIBRATION_LOOKBACK_DAYS
         )
-        training_data[icao_code] = city_training_data
+        calibration_data[icao_code] = city_calibration_data
 
       except Exception as e:
         self.log.error(
@@ -172,29 +172,29 @@ class WeatherPredictorCalibratorActor(Actor):
         continue
 
     self.log.info(
-      message=f"Training weather model for {len(training_data)} cities...",
+      message=f"Calibrating weather model for {len(calibration_data)} cities...",
       color=LogColor.NORMAL
     )
 
-    # Train the model params for each city
-    trained_params = {}
-    for icao_code, city_training_data in training_data.items():
+    # Calibrate the model params for each city
+    calibrated_params = {}
+    for icao_code, city_calibration_data in calibration_data.items():
       try:
-        params = self._train_model_for_city(
+        params = self._calibrate_model_for_city(
           icao_code=icao_code,
-          training_data=city_training_data
+          calibration_data=city_calibration_data
         )
-        trained_params[icao_code] = params
+        calibrated_params[icao_code] = params
 
       except Exception as e:
         self.log.error(
-          message=f"Error training weather model for {icao_code}: {str(e)}",
+          message=f"Error calibrating weather model for {icao_code}: {str(e)}",
           color=LogColor.RED
         )
         continue
 
-    # Save the trained model params for each city into the database
-    for param in trained_params.values():
+    # Save the calibrated model params for each city into the database
+    for param in calibrated_params.values():
       try:
         self.database_adapter.save_model_parameters(
           params=param
@@ -202,13 +202,13 @@ class WeatherPredictorCalibratorActor(Actor):
 
       except Exception as e:
         self.log.error(
-          message=f"Error saving trained model parameters for {param.icao_code} into the database: {str(e)}",
+          message=f"Error saving calibrated model parameters for {param.icao_code} into the database: {str(e)}",
           color=LogColor.RED
         )
         continue
 
     self.log.info(
-      message=f"Saved model params for {len(trained_params)} cities into the database",
+      message=f"Saved model params for {len(calibrated_params)} cities into the database",
       color=LogColor.GREEN
     )
 
@@ -217,18 +217,18 @@ class WeatherPredictorCalibratorActor(Actor):
 
   def _calculate_start_time(self) -> datetime:
     """
-    This function calculates the start time for the model training timer.
+    This function calculates the start time for the model calibration timer.
 
     Returns:
     ----------------
     datetime:
-      The start time for the model training in UTC.
+      The start time for the model calibration in UTC.
     """
-    target_hour = settings.WEATHER_TRAINER_SETTINGS.DATA_TRAINING_TARGET_HOUR
-    target_day = settings.WEATHER_TRAINER_SETTINGS.DATA_TRAINING_INTERVAL_DAYS
+    target_hour = settings.WEATHER_CALIBRATOR_SETTINGS.DATA_CALIBRATION_TARGET_HOUR
+    target_day = settings.WEATHER_CALIBRATOR_SETTINGS.DATA_CALIBRATION_INTERVAL_DAYS
 
     current_time_local = Timestamp.now(tz="Asia/Kuala_Lumpur")
-    start_time_local = current_time_local.normalize() + Timedelta(hours=target_hour)
+    start_time_local = current_time_local.normalize() + Timedelta(hours=6, minutes=5)
 
     if current_time_local >= start_time_local:
       start_time_local += Timedelta(days=target_day)
@@ -289,21 +289,21 @@ class WeatherPredictorCalibratorActor(Actor):
     
     return float(-sum(log_likelihood))
   
-  def _train_model_for_city(
+  def _calibrate_model_for_city(
     self, 
     icao_code: str,
-    training_data: DataFrame
+    calibration_data: DataFrame
   ) -> WeatherCalibrationParams:
     """
-    This function trains the EMOS model for a specific city using the provided training data.
+    This function calibrates the EMOS model for a specific city using the provided calibration data.
 
     Parameters
     ----------------    
     icao_code (str):
-      The ICAO code of the city for which the model is being trained.
+      The ICAO code of the city for which the model is being calibrated.
 
-    training_data (DataFrame):
-      The DataFrame containing the training data for the city.
+    calibration_data (DataFrame):
+      The DataFrame containing the calibration data for the city.
 
     Returns
     ----------------
@@ -313,9 +313,9 @@ class WeatherPredictorCalibratorActor(Actor):
     init_a, init_b, init_c, init_d = 0.0, 1.0, 0.01, 1.0
 
     # Extract raw arrays and compute stddev from variance
-    ensemble_mean = training_data["ensemble_mean"].values
-    ensemble_stdev = training_data["ensemble_stdev"].values
-    historical_max = training_data["temperature_2m_max"].values
+    ensemble_mean = calibration_data["ensemble_mean"].values
+    ensemble_stdev = calibration_data["ensemble_stdev"].values
+    historical_max = calibration_data["temperature_2m_max"].values
 
     # Initial guess: [a=0 (no bias), b=1 (scale 1:1), c=0.01 (baseline var), d=1 (scale 1:1)]
     initial_guess = array([init_a, init_b, init_c, init_d])

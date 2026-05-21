@@ -63,8 +63,8 @@ class WeatherStateActor(Actor):
       handler=self._on_data_collection_status
     )
     self.msgbus.register(
-      endpoint=WeatherEndpoint.WEATHER_MODEL_TRAINING_STATUS.value,
-      handler=self._on_model_training_status
+      endpoint=WeatherEndpoint.WEATHER_MODEL_CALIBRATION_STATUS.value,
+      handler=self._on_model_calibration_status
     )
     self.msgbus.register(
       endpoint=WeatherEndpoint.WEATHER_FORECAST_UPDATE.value,
@@ -116,8 +116,8 @@ class WeatherStateActor(Actor):
       handler=self._on_data_collection_status
     )
     self.msgbus.deregister(
-      endpoint=WeatherEndpoint.WEATHER_MODEL_TRAINING_STATUS.value,
-      handler=self._on_model_training_status
+      endpoint=WeatherEndpoint.WEATHER_MODEL_CALIBRATION_STATUS.value,
+      handler=self._on_model_calibration_status
     )
     self.msgbus.deregister(
       endpoint=WeatherEndpoint.WEATHER_FORECAST_UPDATE.value,
@@ -261,27 +261,27 @@ class WeatherStateActor(Actor):
         msg=self.cities,
       )
 
-  def _on_model_training_status(self, status: Status) -> None:
+  def _on_model_calibration_status(self, status: Status) -> None:
     """
-    This function is called when a model training status message is received.
+    This function is called when a model calibration status message is received.
 
     Parameters
     ----------------
     status (Status): 
-      The model training status message.
+      The model calibration status message.
     """
     self.log.debug(
-      message=f"Received model training status: {status.value}",
+      message=f"Received model calibration status: {status.value}",
       color=LogColor.CYAN
     )
 
     if status == Status.READY:
       self.log.info(
-        message=f"Sending {len(self.manifests)} unique cities for model training...",
+        message=f"Sending {len(self.manifests)} unique cities for model calibration...",
         color=LogColor.NORMAL
       )
       self.msgbus.send(
-        endpoint=WeatherEndpoint.WEATHER_MODEL_TRAINING_REQUEST.value,
+        endpoint=WeatherEndpoint.WEATHER_MODEL_CALIBRATION_REQUEST.value,
         msg=self.cities,
       )
       

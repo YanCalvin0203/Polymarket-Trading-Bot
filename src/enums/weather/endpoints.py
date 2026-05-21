@@ -18,9 +18,9 @@ class WeatherEndpoint(Enum):
     module="WeatherStateActor",
     class_name="on_data_collection_status"
   )
-  WEATHER_MODEL_TRAINING_STATUS = make_path(
+  WEATHER_MODEL_CALIBRATION_STATUS = make_path(
     module="WeatherStateActor",
-    class_name="on_model_training_status"
+    class_name="on_model_calibration_status"
   )
 
   WEATHER_FORECAST_REQUEST = make_path(
@@ -35,9 +35,9 @@ class WeatherEndpoint(Enum):
     module="WeatherDataCollectorActor",
     class_name="on_receive_data_collection_request"
   )
-  WEATHER_MODEL_TRAINING_REQUEST = make_path(
-    module="WeatherModelTrainerActor",
-    class_name="on_model_training_request"
+  WEATHER_MODEL_CALIBRATION_REQUEST = make_path(
+    module="WeatherPredictorCalibratorActor",
+    class_name="on_model_calibration_request"
   )
 
   WEATHER_FORECAST_UPDATE = make_path(
