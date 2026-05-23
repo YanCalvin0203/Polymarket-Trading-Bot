@@ -4,6 +4,8 @@ import requests
 from typing import Any
 from datetime import timezone
 from pandas import Timestamp, Timedelta
+from src.enums.weather import TemperatureUnit
+from src.utils.temperature_converter import to_celsius
 from src.settings import settings
 from src.models.weather import (
   WeatherDataCollectionActualMaxModel,
@@ -107,6 +109,9 @@ class WeatherIEM:
         actual_max = max_temperature_response.get("max_tmpf", None)
         if actual_max is None:
           continue
+
+        if location.temperature_unit.api_value == TemperatureUnit.CELSIUS.api_value:
+          actual_max = to_celsius(actual_max)
         
         data_collection_actual_max_model = WeatherDataCollectionActualMaxModel(
           actual_max=actual_max,
