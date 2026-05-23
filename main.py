@@ -81,6 +81,11 @@ def main() -> None:
     config_path=settings.NODE_CONFIG.WEATHER_PREDICTOR_CALIBRATOR_ACTOR_CONFIG_PATH,
     config={}
   )
+  weather_predictor_actor_config = ImportableActorConfig(
+    actor_path=settings.NODE_CONFIG.WEATHER_PREDICTOR_ACTOR_PATH,
+    config_path=settings.NODE_CONFIG.WEATHER_PREDICTOR_ACTOR_CONFIG_PATH,
+    config={}
+  )
 
   # ---- Client Configurations ----------------------
 
@@ -106,6 +111,7 @@ def main() -> None:
       weather_observation_ingestor_actor_config,
       weather_data_collector_actor_config,
       weather_predictor_calibrator_actor_config,
+      weather_predictor_actor_config,
     ]
   )
 

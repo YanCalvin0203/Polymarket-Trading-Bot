@@ -3,6 +3,59 @@ from datetime import datetime
 from src.enums.weather.units import TemperatureUnit
 
 
+@dataclass(slots=True)
+class WeatherEventPredictionModel:
+  market_predictions: dict[str, WeatherMarketPredictionModel]
+
+  # ---- Public API -------------------------------------
+
+  def __str__(self) -> str:
+    """
+    This functions returns a string representation of the
+    WeatherEventPredictionModel instance.
+
+    Returns
+    --------------
+    str: 
+      The string representation of the WeatherEventPredictionModel 
+      instance.
+    """
+    return (
+      f"---- Weather Event Prediction Model ----------------\n"
+      f"total_market_predictions: {len(self.market_predictions)}\n"
+    )
+
+
+@dataclass(slots=True)
+class WeatherMarketPredictionModel:
+  market_id: str
+  icao_code: str
+  lead_days: int
+  predicted_probability: float
+  last_updated: datetime
+
+  # ---- Public API -------------------------------------
+
+  def __str__(self) -> str:
+    """
+    This functions returns a string representation of the
+    WeatherMarketPredictionModel instance.
+
+    Returns
+    --------------
+    str: 
+      The string representation of the WeatherMarketPredictionModel 
+      instance.
+    """
+    return (
+      f"---- Weather Market Prediction Model ----------------\n"
+      f"market_id:              {self.market_id},\n"
+      f"icao_code:              {self.icao_code},\n"
+      f"lead_days:              {self.lead_days},\n"
+      f"predicted_probability:  {self.predicted_probability},\n"
+      f"last_updated:           {self.last_updated}\n"
+    )
+
 
 @dataclass(slots=True)
 class WeatherDataCollectionActualMaxModel:

@@ -5,8 +5,9 @@ from src.enums.common import Status
 from src.enums.weather import WeatherEndpoint
 from src.parsers.weather import WeatherParser
 from src.models.weather import (
+  WeatherEventPredictionModel,
   WeatherForecastModel, 
-  WeatherObservationModel
+  WeatherObservationModel,
 )
 
 
@@ -36,6 +37,7 @@ class WeatherStateActor(Actor):
     self.events = {}
     self.manifests = {}
     self.cities = {}
+    self.predictions = {}
     self.parser = WeatherParser()
     
 
@@ -67,12 +69,20 @@ class WeatherStateActor(Actor):
       handler=self._on_model_calibration_status
     )
     self.msgbus.register(
+      endpoint=WeatherEndpoint.WEATHER_PREDICTION_STATUS.value,
+      handler=self._on_prediction_status
+    )
+    self.msgbus.register(
       endpoint=WeatherEndpoint.WEATHER_FORECAST_UPDATE.value,
       handler=self._on_forecast_update
     )
     self.msgbus.register(
       endpoint=WeatherEndpoint.WEATHER_OBSERVATION_UPDATE.value,
       handler=self._on_observation_update
+    )
+    self.msgbus.register(
+      endpoint=WeatherEndpoint.WEATHER_PREDICTION_UPDATE.value,
+      handler=self._on_prediction_update
     )
 
     self.log.info(
@@ -120,12 +130,20 @@ class WeatherStateActor(Actor):
       handler=self._on_model_calibration_status
     )
     self.msgbus.deregister(
+      endpoint=WeatherEndpoint.WEATHER_PREDICTION_STATUS.value,
+      handler=self._on_prediction_status
+    )
+    self.msgbus.deregister(
       endpoint=WeatherEndpoint.WEATHER_FORECAST_UPDATE.value,
       handler=self._on_forecast_update
     )
     self.msgbus.deregister(
       endpoint=WeatherEndpoint.WEATHER_OBSERVATION_UPDATE.value,
       handler=self._on_observation_update
+    )
+    self.msgbus.deregister(
+      endpoint=WeatherEndpoint.WEATHER_PREDICTION_UPDATE.value,
+      handler=self._on_prediction_update
     )
 
     self.log.info(
@@ -185,6 +203,30 @@ class WeatherStateActor(Actor):
 
     self.log.info(
       message=f"Updated observations for {len(observation_update)} events",
+      color=LogColor.GREEN
+    )
+
+  def _on_prediction_update(
+      self,
+      prediction_update: dict[str, WeatherEventPredictionModel]
+    ) -> None:
+    """
+    This function is called when a prediction update message is received.
+
+    Parameters
+    ----------------
+    prediction_update (dict[str, WeatherEventPredictionModel]): 
+      The prediction update message.
+    """
+    self.log.debug(
+      message=f"Received prediction update for {len(prediction_update)} events",
+      color=LogColor.CYAN
+    )
+
+    self.predictions = prediction_update
+
+    self.log.info(
+      message=f"Updated predictions for {len(prediction_update)} events",
       color=LogColor.GREEN
     )
 
@@ -253,7 +295,7 @@ class WeatherStateActor(Actor):
 
     if status == Status.READY:
       self.log.info(
-        message=f"Sending {len(self.manifests)} unique cities for data collection...",
+        message=f"Sending {len(self.cities)} unique cities for data collection...",
         color=LogColor.NORMAL
       )
       self.msgbus.send(
@@ -277,11 +319,34 @@ class WeatherStateActor(Actor):
 
     if status == Status.READY:
       self.log.info(
-        message=f"Sending {len(self.manifests)} unique cities for model calibration...",
+        message=f"Sending {len(self.cities)} unique cities for model calibration...",
         color=LogColor.NORMAL
       )
       self.msgbus.send(
         endpoint=WeatherEndpoint.WEATHER_MODEL_CALIBRATION_REQUEST.value,
         msg=self.cities,
       )
-      
+
+  def _on_prediction_status(self, status: Status) -> None:
+    """
+    This function is called when a prediction status message is received.
+
+    Parameters
+    ----------------
+    status (Status): 
+      The prediction status message.
+    """
+    self.log.debug(
+      message=f"Received prediction status: {status.value}",
+      color=LogColor.CYAN
+    )
+
+    if status == Status.READY:
+      self.log.info(
+        message=f"Sending {len(self.events)} prediction requests...",
+        color=LogColor.NORMAL
+      )
+      self.msgbus.send(
+        endpoint=WeatherEndpoint.WEATHER_PREDICTION_REQUEST.value,
+        msg=self.events,
+      )

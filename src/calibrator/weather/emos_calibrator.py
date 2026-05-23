@@ -3,7 +3,9 @@ from pandas import DataFrame
 from numpy import array, ndarray, sqrt
 from scipy.optimize import minimize
 from scipy.stats import norm
+from src.enums.weather import TemperatureUnit
 from src.models.weather import WeatherCalibrationParamsModel
+from src.settings import settings
 
 
 class WeatherEMOSCalibrator:
@@ -12,19 +14,13 @@ class WeatherEMOSCalibrator:
   to calibrate the model.
   """
 
-  def __init__(self) -> None:
-    """
-    This function initializes the WeatherEMOSCalibrator class.
-    """
-    pass
-
-
   # ---- Public API ----------------------------------
 
   def calibrate_model_for_city(
     self, 
     icao_code: str,
     lead_days: int,
+    temperature_unit: TemperatureUnit,
     calibration_data: DataFrame
   ) -> WeatherCalibrationParamsModel:
     """
@@ -39,6 +35,9 @@ class WeatherEMOSCalibrator:
     lead_days (int):
       The lead time in days for which the model is being calibrated.
 
+    temperature_unit (TemperatureUnit):
+      The unit of temperature for the calibration data.
+
     calibration_data (DataFrame):
       The DataFrame containing the calibration data for the city.
 
@@ -47,23 +46,32 @@ class WeatherEMOSCalibrator:
     WeatherCalibrationParamsModel:
       The calibrated EMOS model parameters for the city.
     """
-    init_a, init_b, init_c, init_d = 0.0, 1.0, 0.01, 1.0
+    init_a = settings.WEATHER_CALIBRATOR_SETTINGS.INIT_A
+    init_b = settings.WEATHER_CALIBRATOR_SETTINGS.INIT_B
+    init_d = settings.WEATHER_CALIBRATOR_SETTINGS.INIT_D
+
+    bounds_a = settings.WEATHER_CALIBRATOR_SETTINGS.BOUNDS_A
+    bounds_b = settings.WEATHER_CALIBRATOR_SETTINGS.BOUNDS_B
+    bounds_d = settings.WEATHER_CALIBRATOR_SETTINGS.BOUNDS_D
+
+    if temperature_unit.api_value == TemperatureUnit.FAHRENHEIT.api_value:
+      init_c = settings.WEATHER_CALIBRATOR_SETTINGS.INIT_C_FAHRENHEIT
+      bounds_c = settings.WEATHER_CALIBRATOR_SETTINGS.BOUNDS_C_FAHRENHEIT
+
+    else:
+      init_c = settings.WEATHER_CALIBRATOR_SETTINGS.INIT_C_CELSIUS
+      bounds_c = settings.WEATHER_CALIBRATOR_SETTINGS.BOUNDS_C_CELSIUS
 
     # Extract raw arrays and compute stddev from variance
     ensemble_mean = calibration_data["ensemble_mean"].values
     ensemble_stdev = calibration_data["ensemble_stdev"].values
     historical_max = calibration_data["actual_max"].values
 
-    # Initial guess: [a=0 (no bias), b=1 (scale 1:1), c=0.01 (baseline var), d=1 (scale 1:1)]
+    # Initial guess
     initial_guess = array([init_a, init_b, init_c, init_d])
 
     # Set strict physical bounds
-    bounds = [
-      (None, None),   # 'a' can be any additive shift (positive or negative)
-      (0.1, 3.0),     # 'b' multiplicative mean scale constraint
-      (0.05, None),   # 'c' baseline variance floor (prevents division-by-zero risks)
-      (0.05, None)    # 'd' variance scaling multiplier floor
-    ]
+    bounds = [bounds_a, bounds_b, bounds_c, bounds_d]
 
     # Run the Scipy Solver
     result = minimize(

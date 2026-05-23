@@ -592,8 +592,8 @@ class WeatherParser:
     infinity = float("inf")
     negative_infinity = float("-inf")
 
-    lower_bound = first_temp
-    upper_bound = second_temp if second_temp is not None else first_temp
+    lower_bound = first_temp - 0.5
+    upper_bound = (second_temp + 0.5) if second_temp is not None else (first_temp + 0.5)
 
     if qualifier == TemperatureQualifier.OR_BELOW.value:
       lower_bound = negative_infinity
