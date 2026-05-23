@@ -34,8 +34,8 @@ class WeatherDataCollectionActualMaxModel:
 @dataclass(slots=True)
 class WeatherDataCollectionForecastModel:
   lead_days: int
-  forecast_mean: float
-  forecast_stdev: float
+  ensemble_mean: float
+  ensemble_stdev: float
   resolution_date: datetime
   created_at: datetime
 
@@ -55,8 +55,8 @@ class WeatherDataCollectionForecastModel:
     return (
       f"---- Weather Data Collection Forecast Model ----------------\n"
       f"lead_days:       {self.lead_days},\n"
-      f"forecast_mean:   {self.forecast_mean},\n"
-      f"forecast_stdev:  {self.forecast_stdev},\n"
+      f"ensemble_mean:   {self.ensemble_mean},\n"
+      f"ensemble_stdev:  {self.ensemble_stdev},\n"
       f"resolution_date: {self.resolution_date},\n"
       f"created_at:      {self.created_at}\n"
     )

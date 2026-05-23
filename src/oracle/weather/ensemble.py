@@ -191,8 +191,8 @@ class WeatherEnsemble:
         lead_day = (target_date - current_local_date).days
         data_collection_forecast_model = WeatherDataCollectionForecastModel(
           lead_days=lead_day,
-          forecast_mean=row["ensemble_mean"],
-          forecast_stdev=row["ensemble_stdev"],
+          ensemble_mean=row["ensemble_mean"],
+          ensemble_stdev=row["ensemble_stdev"],
           resolution_date=target_date,
           created_at=Timestamp.now(tz=timezone.utc)
         )

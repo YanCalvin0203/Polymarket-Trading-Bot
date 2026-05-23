@@ -1,110 +1,26 @@
-from sqlalchemy import create_engine, text
-from src.settings import settings
+from sqlalchemy import (
+  create_engine, 
+  MetaData,
+  Table, 
+  Column, 
+  String, 
+  Float, 
+  Integer,
+  DateTime, 
+  Index,
+  select, 
+  desc
+)
+from datetime import datetime, timezone, timedelta
 from pandas import DataFrame, read_sql_query
+from sqlalchemy.dialects.postgresql import insert
+from src.settings import settings
 from src.models.weather import (
-  WeatherHistoricalMaxModel,
-  WeatherHistoricalForecastModel,
-  WeatherCalibrationParams
+  WeatherDataCollectionActualMaxModel,
+  WeatherDataCollectionForecastModel,
+  WeatherCalibrationParamsModel
 )
 
-
-# ---- SQL Queries -----------------------------------
-
-CREATE_DATA_TABLE_QUERY = text(
-  """
-  CREATE TABLE IF NOT EXISTS weather_data (
-    timestamp TIMESTAMPTZ NOT NULL,
-    icao_code VARCHAR(10) NOT NULL,
-    ensemble_mean FLOAT,
-    ensemble_stdev FLOAT,
-    temperature_2m_max FLOAT,
-    PRIMARY KEY (timestamp, icao_code)
-  );
-  """
-)
-
-CREATE_DATA_INDEX_QUERY = text(
-  """
-  CREATE INDEX IF NOT EXISTS idx_weather_data_lookup 
-  ON weather_data (icao_code, timestamp DESC);
-  """
-)
-
-UPSERT_DATA_QUERY = text(
-  """
-  INSERT INTO weather_data (
-    timestamp, 
-    icao_code, 
-    ensemble_mean, 
-    ensemble_stdev, 
-    temperature_2m_max
-  ) VALUES (
-    :timestamp, 
-    :icao_code, 
-    :ensemble_mean, 
-    :ensemble_stdev, 
-    :temperature_2m_max
-  )
-  ON CONFLICT (timestamp, icao_code) 
-  DO UPDATE SET 
-    ensemble_mean = EXCLUDED.ensemble_mean,
-    ensemble_stdev = EXCLUDED.ensemble_stdev,
-    temperature_2m_max = EXCLUDED.temperature_2m_max;
-  """
-)
-
-LOAD_DATA_QUERY = text(
-  """
-  SELECT timestamp, ensemble_mean, ensemble_stdev, temperature_2m_max
-  FROM weather_data
-  WHERE icao_code = :icao_code
-    AND timestamp >= NOW() - INTERVAL '1 day' * :lookback_days
-  ORDER BY timestamp DESC;
-  """
-)
-
-CREATE_PARAMS_TABLE_QUERY = text(
-  """
-  CREATE TABLE IF NOT EXISTS model_parameters (
-    icao_code VARCHAR(10) NOT NULL,
-    last_updated TIMESTAMPTZ NOT NULL,
-    param_a FLOAT NOT NULL,
-    param_b FLOAT NOT NULL,
-    param_c FLOAT NOT NULL,
-    param_d FLOAT NOT NULL,
-    PRIMARY KEY (icao_code)
-  );
-  """
-)
-
-UPSERT_PARAMS_QUERY = text(
-  """
-  INSERT INTO model_parameters (
-    icao_code, 
-    last_updated, 
-    param_a, 
-    param_b, 
-    param_c, 
-    param_d
-  ) VALUES (
-    :icao_code, 
-    :last_updated, 
-    :param_a, 
-    :param_b, 
-    :param_c, 
-    :param_d
-  )
-  ON CONFLICT (icao_code) 
-  DO UPDATE SET 
-    last_updated = EXCLUDED.last_updated,
-    param_a = EXCLUDED.param_a,
-    param_b = EXCLUDED.param_b,
-    param_c = EXCLUDED.param_c,
-    param_d = EXCLUDED.param_d;
-  """
-)
-
-# ---- Main Adapter Class ----------------------------
 
 class WeatherPostgresAdapter:
   """
@@ -123,66 +39,178 @@ class WeatherPostgresAdapter:
       pool_size=settings.DATABASE_CONFIG.POOL_SIZE,
       max_overflow=settings.DATABASE_CONFIG.MAX_OVERFLOW,
     )
+
+    self.metadata = MetaData()
+
+    # ---- Tables --------------------------------------
+
+    self.weather_data_table = Table(
+      "weather_data",
+      self.metadata,
+      Column("timestamp", DateTime(timezone=True), nullable=False),
+      Column("icao_code", String(5), primary_key=True, nullable=False),
+      Column("lead_days", Integer, primary_key=True, nullable=False),
+      Column("resolution_date", DateTime(timezone=True), primary_key=True, nullable=False),
+      Column("ensemble_mean", Float),
+      Column("ensemble_stdev", Float),
+      Column("actual_max", Float),
+    )
+
+    Index(
+      "idx_weather_data_lookup",
+      self.weather_data_table.c.icao_code,
+      desc(self.weather_data_table.c.resolution_date),
+      self.weather_data_table.c.lead_days,
+    )
+
+    self.model_parameters_table = Table(
+      "model_parameters",
+      self.metadata,
+      Column("icao_code", String(5), primary_key=True, nullable=False),
+      Column("lead_days", Integer, primary_key=True, nullable=False),
+      Column("last_updated", DateTime(timezone=True), nullable=False),
+      Column("param_a", Float, nullable=False),
+      Column("param_b", Float, nullable=False),
+      Column("param_c", Float, nullable=False),
+      Column("param_d", Float, nullable=False),
+    )
+
     self._create_schema_if_not_exists()
 
 
   # ---- Public API ----------------------------------
 
-  def save_weather_data(
+  def save_forecast_data(
     self, 
     icao_code: str, 
-    historical_max: WeatherHistoricalMaxModel, 
-    historical_forecast: WeatherHistoricalForecastModel
+    forecast_data_list: list[WeatherDataCollectionForecastModel]
   ) -> None:
     """
-    This function saves the weather data to the Postgres database.
+    This function saves the weather forecast data to the Postgres database.
 
     Parameters:
     ----------------
     icao_code (str): 
       The ICAO code of the city for which the weather data is being saved.
 
-    historical_max (WeatherHistoricalMaxModel): 
-      The historical max model containing the max temperature data.
-
-    historical_forecast (WeatherHistoricalForecastModel): 
-      The historical forecast model containing the forecast data.
+    forecast_data_list (list[WeatherDataCollectionForecastModel]): 
+      The list of collected forecast data to be saved.
     """
-    payload = self._combine_historical_data(
-      icao_code=icao_code,
-      historical_max=historical_max,
-      historical_forecast=historical_forecast
-    )
-    if payload is None:
-      return None
+    if len(forecast_data_list) == 0:
+      return
     
-    # Convert the combined DataFrame into a list of dictionaries for bulk upsert
-    data_records = payload.to_dict(orient="records")
+    payload_records = []
+    for forecast_data in forecast_data_list:
+      payload_records.append(
+        {
+          "timestamp": forecast_data.created_at,
+          "icao_code": icao_code,
+          "lead_days": forecast_data.lead_days,
+          "resolution_date": forecast_data.resolution_date,
+          "ensemble_mean": float(forecast_data.ensemble_mean),
+          "ensemble_stdev": float(forecast_data.ensemble_stdev),
+        }
+      )
+    
+    insert_statement = insert(self.weather_data_table).values(payload_records)
+    upsert_statement = insert_statement.on_conflict_do_update(
+      index_elements=["icao_code", "lead_days", "resolution_date"],
+      set_={
+        "timestamp": insert_statement.excluded.timestamp,
+        "ensemble_mean": insert_statement.excluded.ensemble_mean,
+        "ensemble_stdev": insert_statement.excluded.ensemble_stdev,
+      }
+    )
     
     with self.engine.begin() as connection:
-      connection.execute(UPSERT_DATA_QUERY, data_records)
+      connection.execute(upsert_statement)
 
-  def save_model_parameters(self, params: WeatherCalibrationParams) -> None:
+  def save_actual_max_data(
+    self, 
+    icao_code: str, 
+    actual_max_data_list: list[WeatherDataCollectionActualMaxModel]
+  ) -> None:
+    """
+    This function saves the actual max weather data to the Postgres database.
+
+    Parameters:
+    ----------------
+    icao_code (str): 
+      The ICAO code of the city for which the weather data is being saved.
+
+    actual_max_data_list (list[WeatherDataCollectionActualMaxModel]): 
+      The list of collected actual max data to be saved.
+    """
+    if len(actual_max_data_list) == 0:
+      return
+    
+    lead_days = settings.WEATHER_ORACLE_SETTINGS.DATA_COLLECTION_LOOKAHEAD_DAYS
+
+    payload_records = []
+    for actual_max_data in actual_max_data_list:
+      for day in range(lead_days + 1):
+        payload_records.append(
+          {
+            "timestamp": actual_max_data.created_at,
+            "icao_code": icao_code,
+            "lead_days": day,
+            "resolution_date": actual_max_data.resolution_date,
+            "actual_max": float(actual_max_data.actual_max),
+          }
+        )
+
+    insert_statement = insert(self.weather_data_table).values(payload_records)
+    upsert_statement = insert_statement.on_conflict_do_update(
+      index_elements=["icao_code", "lead_days", "resolution_date"],
+      set_={
+        "timestamp": insert_statement.excluded.timestamp,
+        "actual_max": insert_statement.excluded.actual_max,
+      }
+    )
+    
+    with self.engine.begin() as connection:
+      connection.execute(upsert_statement)
+
+  def save_model_parameters(self, params_list: list[WeatherCalibrationParamsModel]) -> None:
     """
     This function saves the calibrated model parameters to the Postgres database.
 
     Parameters:
     ----------------
-    params (WeatherCalibrationParams): 
+    params_list (list[WeatherCalibrationParamsModel]): 
       The calibrated model parameters to be saved.
     """
-    with self.engine.begin() as connection:
-      connection.execute(
-        UPSERT_PARAMS_QUERY,
+    if len(params_list) == 0:
+      return
+    
+    payload_records = []
+    for params in params_list:
+      payload_records.append(
         {
           "icao_code": params.icao_code,
+          "lead_days": params.lead_days,
           "last_updated": params.last_updated,
-          "param_a": params.a,
-          "param_b": params.b,
-          "param_c": params.c,
-          "param_d": params.d
+          "param_a": float(params.a),
+          "param_b": float(params.b),
+          "param_c": float(params.c),
+          "param_d": float(params.d)
         }
       )
+
+    insert_statement = insert(self.model_parameters_table).values(payload_records)
+    upsert_statement = insert_statement.on_conflict_do_update(
+      index_elements=["icao_code", "lead_days"],
+      set_={
+        "last_updated": insert_statement.excluded.last_updated,
+        "param_a": insert_statement.excluded.param_a,
+        "param_b": insert_statement.excluded.param_b,
+        "param_c": insert_statement.excluded.param_c,
+        "param_d": insert_statement.excluded.param_d
+      }
+    )
+
+    with self.engine.begin() as connection:
+      connection.execute(upsert_statement)
 
   def load_weather_data(
     self, 
@@ -207,86 +235,71 @@ class WeatherPostgresAdapter:
       A DataFrame containing the weather data for the specified ICAO code and lookback 
       period.
     """
+    cutoff_date = datetime.now(tz=timezone.utc) - timedelta(days=lookback_days)
+    statement = select(self.weather_data_table).where(
+      self.weather_data_table.c.icao_code == icao_code,
+      self.weather_data_table.c.resolution_date >= cutoff_date,
+      self.weather_data_table.c.ensemble_mean.is_not(None),
+      self.weather_data_table.c.ensemble_stdev.is_not(None),
+      self.weather_data_table.c.actual_max.is_not(None)
+    )
+
     with self.engine.connect() as connection:
       return read_sql_query(
-        sql=LOAD_DATA_QUERY,
+        sql=statement,
         con=connection,
-        params={
-          "icao_code": icao_code,
-          "lookback_days": lookback_days
-        },
-        parse_dates=["timestamp"]
+        parse_dates=["timestamp", "resolution_date"]
       )
 
+  def load_model_parameters(
+    self, 
+    icao_code: str, 
+    lead_days: int
+  ) -> WeatherCalibrationParamsModel | None:
+    """
+    This function loads the calibrated model parameters from the Postgres database for a 
+    given ICAO code.
+
+    Parameters:
+    ----------------
+    icao_code (str): 
+      The ICAO code of the city for which to load the model parameters.
+    
+    lead_days (int): 
+      The number of days into the future for which to load the model parameters.
+
+    Returns:
+    ----------------
+    WeatherCalibrationParamsModel | None:
+      The loaded model parameters for the specified ICAO code, or None if no parameters 
+      are found.
+    """
+    statement = select(self.model_parameters_table).where(
+      self.model_parameters_table.c.icao_code == icao_code,
+      self.model_parameters_table.c.lead_days == lead_days,
+    )
+    with self.engine.connect() as connection:
+      result = connection.execute(statement).fetchone()
+
+    if result is None:
+      return None
+    
+    return WeatherCalibrationParamsModel(
+      icao_code=result.icao_code,
+      lead_days=result.lead_days,
+      last_updated=result.last_updated,
+      a=result.param_a,
+      b=result.param_b,
+      c=result.param_c,
+      d=result.param_d
+    )
 
   # ---- Internal Helpers ----------------------------
 
   def _create_schema_if_not_exists(self) -> None:
     """
-    This function creates the weather_data table in the Postgres database if it 
-    does not already exist.
+    This function creates the weather_data table in the Postgres database 
+    if it does not already exist.
     """
     with self.engine.begin() as connection:
-      connection.execute(CREATE_DATA_TABLE_QUERY)
-      connection.execute(CREATE_DATA_INDEX_QUERY)
-      connection.execute(CREATE_PARAMS_TABLE_QUERY)
-
-  def _combine_historical_data(
-    self, 
-    icao_code: str,
-    historical_max: WeatherHistoricalMaxModel, 
-    historical_forecast: WeatherHistoricalForecastModel
-  ) -> DataFrame | None:
-    """
-    This function combines the historical maximum temperature data and the 
-    historical forecast data into a single DataFrame.
-
-    Parameters:
-    ----------------
-    icao_code (str): 
-      The ICAO code of the city for which the data is being combined.
-
-    historical_max (WeatherHistoricalMaxModel): 
-      The historical max model containing the max temperature data.
-
-    historical_forecast (WeatherHistoricalForecastModel): 
-      The historical forecast model containing the forecast data.
-
-    Returns:
-    ----------------
-    DataFrame | None: 
-      A combined DataFrame containing both maximum temperature and forecast data, 
-      or None if either DataFrame is empty.
-    """
-    max_temperature_df = historical_max.historical_max_data
-    forecast_df = historical_forecast.historical_forecast_data
-
-    if max_temperature_df is None or forecast_df is None:
-      return None
-    
-    if max_temperature_df.empty or forecast_df.empty:
-      return None
-    
-    # Align the DataFrames perfectly on the timezone aware index (timestamp)
-    combined_df = max_temperature_df.join(
-      forecast_df,
-      how="inner"
-    )
-
-    # Reset the index to turn the timestamp into an explicit column
-    combined_df.reset_index(inplace=True)
-    combined_df.rename(columns={combined_df.columns[0]: "timestamp"}, inplace=True)
-
-    # Inject the identifier metadata column
-    combined_df["icao_code"] = icao_code
-
-    # Map the columns to the expected format for the database
-    payload = combined_df[[
-      "timestamp",
-      "icao_code",
-      "ensemble_mean",
-      "ensemble_stdev",
-      "temperature_2m_max"
-    ]]
-
-    return payload
+      self.metadata.create_all(connection)

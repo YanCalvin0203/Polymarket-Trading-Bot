@@ -3,12 +3,13 @@ from datetime import datetime
 
 
 @dataclass(frozen=True, slots=True)
-class WeatherCalibrationParams:
+class WeatherCalibrationParamsModel:
   """
   This dataclass encapsulates the parameters of the calibrated EMOS 
   model for a specific city.
   """
   icao_code: str
+  lead_days: int
   last_updated: datetime
   a: float
   b: float
@@ -19,17 +20,18 @@ class WeatherCalibrationParams:
 
   def __str__(self) -> str:
     """
-    This functions returns a string representation of the WeatherCalibrationParams 
+    This functions returns a string representation of the WeatherCalibrationParamsModel
     instance.
 
     Returns
     --------------
     str: 
-      The string representation of the WeatherCalibrationParams instance.
+      The string representation of the WeatherCalibrationParamsModel instance.
     """
     return (
-      f"---- Weather Calibration Params ----------------------\n"
+      f"---- Weather Calibration Params Model -----------------\n"
       f"icao_code:    {self.icao_code}\n"
+      f"lead_days:    {self.lead_days}\n"
       f"last_updated: {self.last_updated}\n"
       f"a:            {self.a},\n"
       f"b:            {self.b},\n"

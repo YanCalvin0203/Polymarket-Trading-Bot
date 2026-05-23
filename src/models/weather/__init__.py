@@ -1,5 +1,5 @@
 from .manifest import WeatherManifestModel
-from .calibration import WeatherCalibrationParams
+from .calibration import WeatherCalibrationParamsModel
 from .components import (
   WeatherDataCollectionActualMaxModel,
   WeatherDataCollectionForecastModel,
@@ -22,5 +22,5 @@ __all__ = [
   "WeatherEventModel",
   "WeatherMarketModel",
   "WeatherManifestModel",
-  "WeatherCalibrationParams"
+  "WeatherCalibrationParamsModel"
 ]

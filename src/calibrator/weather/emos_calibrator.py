@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from pandas import DataFrame
 from numpy import array, ndarray, sqrt
 from scipy.optimize import minimize
 from scipy.stats import norm
-from src.models.weather import WeatherCalibrationParams
+from src.models.weather import WeatherCalibrationParamsModel
 
 
 class WeatherEMOSCalibrator:
@@ -24,8 +24,9 @@ class WeatherEMOSCalibrator:
   def calibrate_model_for_city(
     self, 
     icao_code: str,
+    lead_days: int,
     calibration_data: DataFrame
-  ) -> WeatherCalibrationParams:
+  ) -> WeatherCalibrationParamsModel:
     """
     This function calibrates the EMOS model for a specific city using the provided 
     calibration data.
@@ -35,12 +36,15 @@ class WeatherEMOSCalibrator:
     icao_code (str):
       The ICAO code of the city for which the model is being calibrated.
 
+    lead_days (int):
+      The lead time in days for which the model is being calibrated.
+
     calibration_data (DataFrame):
       The DataFrame containing the calibration data for the city.
 
     Returns
     ----------------
-    WeatherCalibrationParams:
+    WeatherCalibrationParamsModel:
       The calibrated EMOS model parameters for the city.
     """
     init_a, init_b, init_c, init_d = 0.0, 1.0, 0.01, 1.0
@@ -48,7 +52,7 @@ class WeatherEMOSCalibrator:
     # Extract raw arrays and compute stddev from variance
     ensemble_mean = calibration_data["ensemble_mean"].values
     ensemble_stdev = calibration_data["ensemble_stdev"].values
-    historical_max = calibration_data["temperature_2m_max"].values
+    historical_max = calibration_data["actual_max"].values
 
     # Initial guess: [a=0 (no bias), b=1 (scale 1:1), c=0.01 (baseline var), d=1 (scale 1:1)]
     initial_guess = array([init_a, init_b, init_c, init_d])
@@ -71,9 +75,10 @@ class WeatherEMOSCalibrator:
     )
 
     if not result.success:
-      return WeatherCalibrationParams(
+      return WeatherCalibrationParamsModel(
         icao_code=icao_code,
-        last_updated=datetime.now(),
+        lead_days=lead_days,
+        last_updated=datetime.now(tz=timezone.utc),
         a=init_a, 
         b=init_b, 
         c=init_c, 
@@ -81,9 +86,10 @@ class WeatherEMOSCalibrator:
       )
 
     a, b, c, d = result.x
-    return WeatherCalibrationParams(
+    return WeatherCalibrationParamsModel(
       icao_code=icao_code,
-      last_updated=datetime.now(),
+      lead_days=lead_days,
+      last_updated=datetime.now(tz=timezone.utc),
       a=float(a),
       b=float(b),
       c=float(c),

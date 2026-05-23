@@ -7,9 +7,14 @@ from nautilus_trader.common.events import TimeEvent
 from src.enums.common import Status
 from src.enums.weather import WeatherTimer, WeatherEndpoint
 from src.oracle.weather.ensemble import WeatherEnsemble
+from src.oracle.weather.iem import WeatherIEM
 from src.database.weather_adapter import WeatherPostgresAdapter
 from src.models.weather import LocationModel
 from src.settings import settings
+from src.models.weather import (
+  WeatherDataCollectionForecastModel, 
+  WeatherDataCollectionActualMaxModel
+)
 
 
 class WeatherDataCollectorActorConfig(ActorConfig):
@@ -37,6 +42,7 @@ class WeatherDataCollectorActor(Actor):
     super().__init__(config)
     self.cities = {}
     self.ensemble = WeatherEnsemble()
+    self.iem = WeatherIEM()
     self.database_adapter = WeatherPostgresAdapter()
 
 
@@ -155,13 +161,13 @@ class WeatherDataCollectorActor(Actor):
       color=LogColor.NORMAL
     )
     
-    historical_max = self.ensemble.get_historical_max(
+    data_collection_forecast = self.ensemble.get_data_collection_forecasts(
       cities=self.cities,
-      historical_range_days=settings.WEATHER_ORACLE_SETTINGS.HISTORICAL_RANGE_DAYS
+      lookahead_days=settings.WEATHER_ORACLE_SETTINGS.DATA_COLLECTION_LOOKAHEAD_DAYS
     )
-    historical_forecast = self.ensemble.get_historical_forecasts(
+    data_collection_actual_max = self.iem.get_data_collection_actual_max(
       cities=self.cities,
-      historical_range_days=settings.WEATHER_ORACLE_SETTINGS.HISTORICAL_RANGE_DAYS
+      lookback_days=settings.WEATHER_ORACLE_SETTINGS.DATA_COLLECTION_LOOKBACK_DAYS
     )
 
     self.log.info(
@@ -170,25 +176,14 @@ class WeatherDataCollectorActor(Actor):
     )
 
     for icao_code in self.cities.keys():
-      historical_max_model = historical_max.get(icao_code, None)
-      historical_forecast_model = historical_forecast.get(icao_code, None)
-
-      if historical_max_model is None and historical_forecast_model is None:
-        continue
-
-      try:
-        self.database_adapter.save_weather_data(
-          icao_code=icao_code,
-          historical_max=historical_max_model,
-          historical_forecast=historical_forecast_model
-        )
-
-      except Exception as e:
-        self.log.error(
-          message=f"Error saving weather data for {icao_code} into the database: {str(e)}",
-          color=LogColor.RED
-         )
-        continue
+      self._save_city_forecast_data_to_db(
+        icao_code=icao_code,
+        data_collection_forecast_list=data_collection_forecast.get(icao_code, [])
+      )
+      self._save_city_actual_max_data_to_db(
+        icao_code=icao_code,
+        data_collection_actual_max_list=data_collection_actual_max.get(icao_code, [])
+      )
 
     self.log.info(
       message=f"Saved weather data for {len(self.cities)} cities into the database",
@@ -196,7 +191,7 @@ class WeatherDataCollectorActor(Actor):
     )
   
   
-  # ---- Helper Handlers -----------------------------------
+  # ---- Internal Helpers ----------------------------
 
   def _calculate_start_time(self) -> datetime:
     """
@@ -219,3 +214,60 @@ class WeatherDataCollectorActor(Actor):
     start_time_utc = start_time_local.tz_convert(timezone.utc).to_pydatetime().replace(tzinfo=None)
     return start_time_utc
   
+  def _save_city_forecast_data_to_db(
+    self, 
+    icao_code: str,
+    data_collection_forecast_list: list[WeatherDataCollectionForecastModel],
+  ) -> None:
+    """
+    This function saves the collected forecast data of a location into the Postgres 
+    database.
+
+    Parameters:
+    ----------------
+    icao_code (str): 
+      The ICAO code of the city for which to save forecast data.
+
+    data_collection_forecast_list (list[WeatherDataCollectionForecastModel]): 
+      The list of collected forecast data to be saved.
+    """
+    try:
+      self.database_adapter.save_forecast_data(
+        icao_code=icao_code,
+        forecast_data_list=data_collection_forecast_list
+      )
+
+    except Exception as e:
+      self.log.error(
+        message=f"Error saving weather data for {icao_code} into the database: {str(e)}",
+        color=LogColor.RED
+      )
+  
+  def _save_city_actual_max_data_to_db(
+    self, 
+    icao_code: str,
+    data_collection_actual_max_list: list[WeatherDataCollectionActualMaxModel],
+  ) -> None:
+    """
+    This function saves the collected actual max data of a location into the Postgres 
+    database.
+
+    Parameters:
+    ----------------
+    icao_code (str): 
+      The ICAO code of the city for which to save actual max data.
+      
+    data_collection_actual_max_list (list[WeatherDataCollectionActualMaxModel]): 
+      The list of collected actual max data to be saved.
+    """
+    try:
+      self.database_adapter.save_actual_max_data(
+        icao_code=icao_code,
+        actual_max_data_list=data_collection_actual_max_list
+      )
+
+    except Exception as e:
+      self.log.error(
+        message=f"Error saving weather data for {icao_code} into the database: {str(e)}",
+        color=LogColor.RED
+      )
