@@ -175,33 +175,33 @@ class WeatherPredictorCalibratorActor(Actor):
     # Calibrate the model params for each city
     calibrated_params = {}
     for icao_code, city_calibration_data in calibration_data.items():
-      try:
-        params = self.calibrator.calibrate_model_for_city(
-          icao_code=icao_code,
-          calibration_data=city_calibration_data
-        )
-        calibrated_params[icao_code] = params
+      for lead_days, grouped_city_calibration_data in city_calibration_data.groupby("lead_days"):
+        try:
+          params = self.calibrator.calibrate_model_for_city(
+            icao_code=icao_code,
+            lead_days=lead_days,
+            calibration_data=grouped_city_calibration_data
+          )
+          calibrated_params[(icao_code, lead_days)] = params
 
-      except Exception as e:
-        self.log.error(
-          message=f"Error calibrating weather model for {icao_code}: {str(e)}",
-          color=LogColor.RED
-        )
-        continue
+        except Exception as e:
+          self.log.error(
+            message=f"Error calibrating weather model for {icao_code}: {str(e)}",
+            color=LogColor.RED
+          )
+          continue
 
-    # Save the calibrated model params for each city into the database
-    for param in calibrated_params.values():
-      try:
-        self.database_adapter.save_model_parameters(
-          params=param
-        )
+    # Save the calibrated model params into the database
+    try:
+      self.database_adapter.save_model_parameters(
+        params_list=list(calibrated_params.values())
+      )
 
-      except Exception as e:
-        self.log.error(
-          message=f"Error saving calibrated model parameters for {param.icao_code} into the database: {str(e)}",
-          color=LogColor.RED
-        )
-        continue
+    except Exception as e:
+      self.log.error(
+        message=f"Error saving calibrated model parameters into the database: {str(e)}",
+        color=LogColor.RED
+      )
 
     self.log.info(
       message=f"Saved model params for {len(calibrated_params)} cities into the database",
