@@ -39,18 +39,19 @@ class WeatherOracleSettings:
 
   # ---- Public API ---------------------------------------
 
-  def get_network_endpoint(self, iata_code: str) -> str:
+  def get_network_endpoint(self, location_identifier: str) -> str:
     """
-    This function returns the network endpoint for the given IATA code.
+    This function returns the network endpoint for the given location identifier.
 
     Parameters
     --------------
-    iata_code (str): 
-      The IATA code for which to get the network endpoint.
+    location_identifier (str): 
+      The location identifier for which to get the network endpoint, ICAO for 
+      international locations and IATA for US locations.
 
     Returns
     --------------
     str: 
-      The network endpoint string for the given IATA code.
+      The network endpoint string for the given location identifier.
     """
-    return f"https://mesonet.agron.iastate.edu/api/1/station/{iata_code}.json"
+    return f"https://mesonet.agron.iastate.edu/api/1/station/{location_identifier}.json"

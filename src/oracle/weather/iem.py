@@ -81,13 +81,19 @@ class WeatherIEM:
     """
     try:
       current_local_date = Timestamp.now(tz=location.timezone).normalize()
-      network_code = self._get_network_code(location=location)
+
+      network_code = self._get_network_code(location_identifier=location.iata_code)
+      location_code = location.iata_code
+      
+      if not network_code:
+        network_code = self._get_network_code(location_identifier=location.icao_code)
+        location_code = location.icao_code
       
       data_collection_actual_max_list = []
       for day in range(1, lookback_days + 1):
         date = current_local_date - Timedelta(days=day)
         params = self._build_query_params(
-          location=location,
+          location_identifier=location_code,
           network_code=network_code,
           date=date
         )
@@ -114,14 +120,15 @@ class WeatherIEM:
     except Exception as e:
       return []
     
-  def _get_network_code(self, location: LocationModel) -> str:
+  def _get_network_code(self, location_identifier: str) -> str:
     """
     This function retrieves the IEM network code for a given location.
 
     Parameters
     --------------
-    location (LocationModel): 
-      The weather location for which to retrieve the IEM network code.
+    location_identifier (str): 
+      The location identifier for which to retrieve the IEM network code, ICAO for 
+      international locations and IATA for US locations.
 
     Returns
     --------------
@@ -132,7 +139,7 @@ class WeatherIEM:
     network_code_response = self._request_iem_data(
       params={},
       endpoint=settings.WEATHER_ORACLE_SETTINGS.get_network_endpoint(
-        location.iata_code
+        location_identifier
       )
     )
     if not network_code_response:
@@ -146,7 +153,7 @@ class WeatherIEM:
  
   def _build_query_params(
     self, 
-    location: LocationModel,
+    location_identifier: str,
     network_code: str,
     date: Timestamp,
   ) -> dict[str, Any]:
@@ -155,8 +162,9 @@ class WeatherIEM:
 
     Parameters
     --------------
-    location (LocationModel): 
-      The weather location for which to build the query parameters.
+    location_identifier (str):
+      The location identifier for the IEM API request, ICAO for international locations 
+      and IATA code for US locations.
 
     network_code (str):
       The network code for the IEM station.
@@ -170,7 +178,7 @@ class WeatherIEM:
       The query parameters for the IEM API request.
     """
     params = {
-      "station": location.iata_code,
+      "station": location_identifier,
       "network": network_code,
       "date": date.strftime('%Y-%m-%d'),
     }
