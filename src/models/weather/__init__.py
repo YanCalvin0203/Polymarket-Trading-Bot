@@ -1,8 +1,8 @@
 from .manifest import WeatherManifestModel
 from .calibration import WeatherCalibrationParams
 from .components import (
-  WeatherHistoricalMaxModel,
-  WeatherHistoricalForecastModel,
+  WeatherDataCollectionActualMaxModel,
+  WeatherDataCollectionForecastModel,
   WeatherForecastModel, 
   WeatherObservationModel, 
   LocationModel
@@ -14,8 +14,8 @@ from .events import (
 
 
 __all__ = [
-  "WeatherHistoricalMaxModel",
-  "WeatherHistoricalForecastModel",
+  "WeatherDataCollectionActualMaxModel",
+  "WeatherDataCollectionForecastModel",
   "WeatherForecastModel",
   "WeatherObservationModel",
   "LocationModel",

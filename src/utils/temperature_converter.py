@@ -1,7 +1,7 @@
-def to_farenheit(celsius: float) -> float:
+def to_fahrenheit(celsius: float) -> float:
   """
   This function converts a temperature from Celsius to 
-  Farenheit.
+  Fahrenheit.
 
   Parameters
   --------------
@@ -11,24 +11,24 @@ def to_farenheit(celsius: float) -> float:
   Returns
   --------------
   float: 
-    The temperature in Farenheit.
+    The temperature in Fahrenheit.
   """
   return (celsius * 9/5) + 32
 
 
-def to_celsius(farenheit: float) -> float:
+def to_celsius(fahrenheit: float) -> float:
   """
-  This function converts a temperature from Farenheit to 
+  This function converts a temperature from Fahrenheit to 
   Celsius.
 
   Parameters
   --------------
-  farenheit (float): 
-    The temperature in Farenheit.
+  fahrenheit (float): 
+    The temperature in Fahrenheit.
 
   Returns
   --------------
   float: 
     The temperature in Celsius.
   """
-  return (farenheit - 32) * 5/9
+  return (fahrenheit - 32) * 5/9

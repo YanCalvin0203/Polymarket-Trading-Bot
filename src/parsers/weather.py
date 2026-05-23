@@ -172,6 +172,7 @@ class WeatherParser:
     location_model = LocationModel(
       city_name=self._parse_city_name(raw_instrument),
       icao_code=self._parse_icao_code(raw_instrument),
+      iata_code=self._parse_iata_code(raw_instrument),
       timezone=self._parse_timezone(raw_instrument),
       temperature_unit=self._parse_temperature_unit(raw_instrument),
       latitude=latitude,
@@ -305,7 +306,10 @@ class WeatherParser:
     bool: 
       True if the location model is valid, False otherwise.
     """
-    if location_model.city_name == "" or location_model.icao_code == "":
+    if location_model.city_name == "":
+      return False
+    
+    if location_model.icao_code == "" or location_model.iata_code == "":
       return False
     
     if location_model.timezone == "" or location_model.temperature_unit is None:
@@ -433,6 +437,31 @@ class WeatherParser:
     
     return station_code.group(1)
   
+  def _parse_iata_code(self, raw_instrument: dict[str, Any]) -> str:
+    """
+    This function parses the IATA code from the raw instrument data.
+
+    Parameters
+    --------------
+    raw_instrument (dict[str, Any]): 
+      The raw instrument data.
+
+    Returns
+    --------------
+    str: 
+      The parsed IATA code.
+    """
+    icao_code = self._parse_icao_code(raw_instrument)
+    if icao_code == "":
+      return ""
+    
+    city_info = self._airport_dict.get(icao_code, None)
+    if city_info is None:
+      return ""
+    
+    iata_code = city_info.get("iata", "")
+    return iata_code
+  
   def _parse_coordinates(
     self, 
     raw_instrument: dict[str, Any]
@@ -462,7 +491,7 @@ class WeatherParser:
     longitude = city_info.get("lon", None)
 
     return (latitude, longitude)
-  
+
   def _parse_timezone(self, raw_instrument: dict[str, Any]) -> str:
     """
     This function parses the timezone of the city from the raw instrument data.

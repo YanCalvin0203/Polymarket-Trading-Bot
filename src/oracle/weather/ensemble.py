@@ -9,8 +9,8 @@ from numpy import array
 from pandas import DataFrame, Timestamp, Timedelta, date_range, to_datetime
 from src.settings import settings
 from src.models.weather import (
-  WeatherHistoricalForecastModel,
-  WeatherHistoricalMaxModel,
+  WeatherDataCollectionForecastModel,
+  WeatherDataCollectionActualMaxModel,
   WeatherForecastModel,
   WeatherManifestModel,
   LocationModel
@@ -60,72 +60,38 @@ class WeatherEnsemble:
 
     return forecasts
   
-  def get_historical_max(
-      self,
-      cities: dict[str, LocationModel],
-      historical_range_days: int = 1
-    ) -> dict[str, WeatherHistoricalMaxModel]:
-    """
-    This function retrieves the historical maximum temperatures for the given 
-    manifests.
-
-    Parameters
-    --------------
-    cities (dict[str, LocationModel]): 
-      The weather locations for which to get the historical maximum temperatures.
-
-    historical_range_days (int):
-      The number of days prior to the location's resolution time to include in 
-      the historical maximum temperature calculation. Defaults to 1 days.
-
-    Returns
-    --------------
-    dict[str, WeatherHistoricalMaxModel]: 
-      The retrieved historical maximum temperatures, keyed by ICAO code.
-    """
-    historical_max = {}
-    for icao_code, location_model in cities.items():
-      historical_max_model = self._get_single_historical_max(
-        location=location_model,
-        historical_range_days=historical_range_days
-      )
-      if historical_max_model is not None:
-        historical_max[icao_code] = historical_max_model
-
-    return historical_max
-  
-  def get_historical_forecasts(
+  def get_data_collection_forecasts(
     self,
     cities: dict[str, LocationModel],
-    historical_range_days: int = 1
-  ) -> dict[str, WeatherHistoricalForecastModel]:
+    lookahead_days: int = 1
+  ) -> dict[str, list[WeatherDataCollectionForecastModel]]:
     """
-    This function retrieves the historical forecasts for the given locations.
+    This function retrieves the data collection forecasts for the given locations.
 
     Parameters
     --------------
     cities (dict[str, LocationModel]): 
-      The weather locations for which to get the historical forecasts.
+      The weather locations for which to get the data collection forecasts.
 
-    historical_range_days (int):
-      The number of days prior to the location's resolution time to include in 
-      the historical forecast calculation. Defaults to 1 days.
+    lookahead_days (int):
+      The number of days into the future to include in the data collection forecast 
+      calculation. Defaults to 1 days.
 
     Returns
     --------------
-    dict[str, WeatherHistoricalForecastModel]: 
-      The retrieved historical forecasts, keyed by ICAO code.
+    dict[str, list[WeatherDataCollectionForecastModel]]: 
+      The retrieved data collection forecasts, keyed by ICAO code.
     """
-    historical_forecasts = {}
+    data_collection_forecasts = {}
     for icao_code, location_model in cities.items():
-      historical_forecast_model = self._get_single_historical_forecast(
+      data_collection_forecast_list = self._get_single_data_collection_forecast(
         location=location_model,
-        historical_range_days=historical_range_days
+        lookahead_days=lookahead_days
       )
-      if historical_forecast_model is not None:
-        historical_forecasts[icao_code] = historical_forecast_model
+      if len(data_collection_forecast_list) > 0:
+        data_collection_forecasts[icao_code] = data_collection_forecast_list
 
-    return historical_forecasts
+    return data_collection_forecasts
   
   
   # ---- Internal Helpers ----------------------------
@@ -175,114 +141,67 @@ class WeatherEnsemble:
     except Exception as e:
       return None
     
-  def _get_single_historical_max(
+  def _get_single_data_collection_forecast(
     self,
     location: LocationModel,
-    historical_range_days: int
-  ) -> WeatherHistoricalMaxModel | None:
+    lookahead_days: int
+  ) -> list[WeatherDataCollectionForecastModel]:
     """
-    This function gets a single historical maximum temperature for a 
-    given location.
+    This function gets the list of data collection forecast for a given location.
 
     Parameters
     --------------
     location (LocationModel): 
-      The weather location for which to get the historical maximum 
-      temperature.
+      The weather location for which to get the data collection forecast.
 
-    historical_range_days (int):
-      The number of days prior to the location's resolution time to include in 
-      the historical maximum temperature calculation.
+    lookahead_days (int):
+      The number of days into the future to include in the data collection forecast 
+      calculation.
 
     Returns
     --------------
-    WeatherHistoricalMaxModel | None: 
-      The structured historical maximum temperature data, or None if the 
-      request fails.
+    list[WeatherDataCollectionForecastModel]: 
+      The list of structured forecast data collection for the location.
     """
     try:
       current_local_date = Timestamp.now(tz=location.timezone).normalize()
-      start_date = current_local_date - Timedelta(days=historical_range_days)
-      end_date = current_local_date - Timedelta(days=1)
+      start_date = current_local_date
+      end_date = current_local_date + Timedelta(days=lookahead_days)
 
       params = self._build_query_params(
         location=location,
-        initial_params=settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_ARCHIVE_QUERY_PARAMS,
+        initial_params=settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_FORECAST_QUERY_PARAMS,
         start_date=start_date,
         end_date=end_date
       )
       response = self._request_ensemble_data(
         params=params, 
-        endpoint=settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_ARCHIVE_ENDPOINT
+        endpoint=settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_FORECAST_ENDPOINT
       )
       if not response:
-        return None
+        return []
       
-      historical_max_df = self._get_historical_max_df(
+      data_collection_forecast_df = self._get_data_collection_forecast_df(
         response=response,
         location=location
       )
-      historical_max_model = WeatherHistoricalMaxModel(
-        historical_max_data=historical_max_df,
-        last_updated=Timestamp.now(tz=timezone.utc)
-      )
-      return historical_max_model
+
+      data_collection_forecast_list = []
+      for target_date, row in data_collection_forecast_df.iterrows():
+        lead_day = (target_date - current_local_date).days
+        data_collection_forecast_model = WeatherDataCollectionForecastModel(
+          lead_days=lead_day,
+          forecast_mean=row["ensemble_mean"],
+          forecast_stdev=row["ensemble_stdev"],
+          resolution_date=target_date,
+          created_at=Timestamp.now(tz=timezone.utc)
+        )
+        data_collection_forecast_list.append(data_collection_forecast_model)
+
+      return data_collection_forecast_list
 
     except Exception as e:
-      return None
-    
-  def _get_single_historical_forecast(
-    self, 
-    location: LocationModel,
-    historical_range_days: int
-  ) -> WeatherHistoricalForecastModel | None:
-    """
-    This function gets a single historical forecast for a given location.
-
-    Parameters
-    --------------
-    location (LocationModel): 
-      The weather location for which to get the historical forecast.
-
-    historical_range_days (int):
-      The number of days prior to the location's resolution time to include in 
-      the historical forecast calculation.
-
-    Returns
-    --------------
-    WeatherHistoricalForecastModel | None: 
-      The structured historical forecast data, or None if the request fails.
-    """
-    try:
-      current_local_date = Timestamp.now(tz=location.timezone).normalize()
-      start_date = current_local_date - Timedelta(days=historical_range_days)
-      end_date = current_local_date - Timedelta(days=1)
-
-      params = self._build_query_params(
-        location=location,
-        initial_params=settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_HISTORICAL_FORECAST_QUERY_PARAMS,
-        start_date=start_date,
-        end_date=end_date
-      )
-      response = self._request_ensemble_data(
-        params=params, 
-        endpoint=settings.WEATHER_ORACLE_SETTINGS.ENSEMBLE_HISTORICAL_FORECAST_ENDPOINT
-      )
-      if not response:
-        return None
-      
-      historical_forecast_df = self._get_historical_forecast_df(
-        response=response,
-        location=location
-      )
-      historical_forecast_model = WeatherHistoricalForecastModel(
-        historical_forecast_data=historical_forecast_df,
-        last_updated=Timestamp.now(tz=timezone.utc)
-      )
-      return historical_forecast_model
-
-    except Exception as e:
-      return None
+      return []
 
   def _build_query_params(
     self, 
@@ -405,57 +324,13 @@ class WeatherEnsemble:
 
     return forecast_mean, forecast_stdev
   
-  def _get_historical_max_df(
+  def _get_data_collection_forecast_df(
     self,
     response: WeatherApiResponse,
     location: LocationModel
   ) -> DataFrame:
     """
-    This function processes the raw API response to extract the historical 
-    maximum temperatures as a dataframe.
-
-    Parameters
-    --------------
-    response (WeatherApiResponse): 
-      The raw response data from the API.
-
-    location (LocationModel): 
-      The weather location for which to extract the historical maximum 
-      temperatures.
-
-    Returns
-    --------------
-    DataFrame: 
-      A dataframe containing the historical maximum temperatures, indexed by 
-      date.
-    """
-    daily = response.Daily()
-    data = daily.Variables(0).ValuesAsNumpy()
-
-    # Calculate the timestamps (localized) for the dataframe index
-    timestamps = date_range(
-      start=Timestamp(daily.Time(), unit="s", tz=timezone.utc),
-      periods=len(data),
-      freq=Timedelta(seconds=daily.Interval()),
-    )   
-    dates = timestamps.tz_convert(location.timezone).normalize()
-
-    # Build the dataframe
-    df = DataFrame(
-      data=data, 
-      index=dates, 
-      columns=["temperature_2m_max"]
-    )
-
-    return df
-  
-  def _get_historical_forecast_df(
-    self,
-    response: WeatherApiResponse,
-    location: LocationModel
-  ) -> DataFrame:
-    """
-    This function processes the raw API response to extract the historical 
+    This function processes the raw API response to extract the data collection 
     forecasts as a dataframe.
 
     Parameters
@@ -464,12 +339,12 @@ class WeatherEnsemble:
       The raw response data from the API.
 
     location (LocationModel):
-      The weather location for which to extract the historical forecasts.
+      The weather location for which to extract the data collection forecasts.
 
     Returns
     --------------
     DataFrame: 
-      A dataframe containing the historical forecasts, indexed by date.
+      A dataframe containing the data collection forecasts, indexed by date.
     """
     hourly = response.Hourly()
 
@@ -496,7 +371,7 @@ class WeatherEnsemble:
     # Scans vertically down the columns for each day to find each member's peak.
     daily_member_max_df: DataFrame = df.groupby(df.index.date).max()
 
-    # Restore the index timezone typing to stay uniform across your app
+    # Restore the index timezone typing to stay uniform across the codebase
     daily_member_max_df.index = to_datetime(daily_member_max_df.index).tz_localize(location.timezone)
 
     summary_df = DataFrame(index=daily_member_max_df.index)

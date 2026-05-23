@@ -43,6 +43,7 @@ class WeatherEventModel:
       f"total markets:        {len(self.markets)},\n"
       f"city_name:            {self.location.city_name},\n"
       f"icao_code:            {self.location.icao_code},\n"
+      f"iata_code:            {self.location.iata_code},\n"
       f"timezone:             {self.location.timezone},\n"
       f"temperature_unit:     {self.location.temperature_unit.api_value},\n"
       f"latitude:             {self.location.latitude},\n"

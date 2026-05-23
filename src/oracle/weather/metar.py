@@ -5,7 +5,7 @@ from typing import Any
 from datetime import datetime, timezone
 from src.settings import settings
 from src.enums.weather import TemperatureUnit
-from src.utils.temperature_converter import to_farenheit
+from src.utils.temperature_converter import to_fahrenheit
 from src.models.weather import (
   WeatherObservationModel,
   WeatherManifestModel,
@@ -167,6 +167,6 @@ class WeatherMetar:
     
     # Convert the temperature unit if necessary (initial response at Celsius)
     if location.temperature_unit.api_value == TemperatureUnit.FAHRENHEIT.api_value:
-      current_temperature = to_farenheit(current_temperature)
+      current_temperature = to_fahrenheit(current_temperature)
 
     return current_temperature

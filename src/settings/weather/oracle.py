@@ -8,7 +8,8 @@ class WeatherOracleSettings:
   # ---- Ensemble ----------------------------------------
 
   ENSEMBLE_COUNT: int = 51
-  HISTORICAL_RANGE_DAYS: int = 1
+  DATA_COLLECTION_LOOKAHEAD_DAYS: int = 3
+  DATA_COLLECTION_LOOKBACK_DAYS: int = 1
 
   ENSEMBLE_FORECAST_ENDPOINT: str = "https://ensemble-api.open-meteo.com/v1/ensemble"
   ENSEMBLE_FORECAST_QUERY_PARAMS: dict[str, Any] = {
@@ -16,17 +17,10 @@ class WeatherOracleSettings:
     "models": "ecmwf_ifs025",
     "timezone": "auto"
   }
-  ENSEMBLE_HISTORICAL_FORECAST_ENDPOINT: str = "https://ensemble-api.open-meteo.com/v1/ensemble"
-  ENSEMBLE_HISTORICAL_FORECAST_QUERY_PARAMS: dict[str, Any] = {
-    "hourly": ["temperature_2m"],
-    "models": "ecmwf_ifs025",
-    "timezone": "auto"
-  }
-  ENSEMBLE_ARCHIVE_ENDPOINT: str = "https://archive-api.open-meteo.com/v1/archive"
-  ENSEMBLE_ARCHIVE_QUERY_PARAMS: dict[str, Any] = {
-    "daily": ["temperature_2m_max"],
-    "timezone": "auto"
-  }
+
+  # ---- IEM ---------------------------------------------
+
+  IEM_ENDPOINT: str = "https://mesonet.agron.iastate.edu/api/1/daily.json"
 
   # ---- Observation -------------------------------------
 
@@ -42,3 +36,21 @@ class WeatherOracleSettings:
 
   REQUEST_DELAY: float = 0.01
   REQUEST_TIMEOUT: int = 10
+
+  # ---- Public API ---------------------------------------
+
+  def get_network_endpoint(self, iata_code: str) -> str:
+    """
+    This function returns the network endpoint for the given IATA code.
+
+    Parameters
+    --------------
+    iata_code (str): 
+      The IATA code for which to get the network endpoint.
+
+    Returns
+    --------------
+    str: 
+      The network endpoint string for the given IATA code.
+    """
+    return f"https://mesonet.agron.iastate.edu/api/1/station/{iata_code}.json"

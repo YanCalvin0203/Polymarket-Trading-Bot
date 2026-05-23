@@ -1,56 +1,64 @@
 from dataclasses import dataclass
 from datetime import datetime
-from pandas import DataFrame
 from src.enums.weather.units import TemperatureUnit
 
 
+
 @dataclass(slots=True)
-class WeatherHistoricalMaxModel:
-  historical_max_data: DataFrame
-  last_updated: datetime
+class WeatherDataCollectionActualMaxModel:
+  actual_max: float
+  resolution_date: datetime
+  created_at: datetime
 
   # ---- Public API -------------------------------------
 
   def __str__(self) -> str:
     """
     This functions returns a string representation of the
-    WeatherHistoricalMaxModel instance.
+    WeatherDataCollectionActualMaxModel instance.
 
     Returns
     --------------
     str: 
-      The string representation of the WeatherHistoricalMaxModel 
+      The string representation of the WeatherDataCollectionActualMaxModel 
       instance.
     """
     return (
-      f"---- Weather Historical Max Model ----------------\n"
-      f"historical_max_data: {self.historical_max_data},\n"
-      f"last_updated:        {self.last_updated}\n"
+      f"---- Weather Data Collection Actual Max Model ----------------\n"
+      f"actual_max:       {self.actual_max},\n"
+      f"resolution_date:  {self.resolution_date},\n"
+      f"created_at:       {self.created_at}\n"
     )
   
 
 @dataclass(slots=True)
-class WeatherHistoricalForecastModel:
-  historical_forecast_data: DataFrame
-  last_updated: datetime
+class WeatherDataCollectionForecastModel:
+  lead_days: int
+  forecast_mean: float
+  forecast_stdev: float
+  resolution_date: datetime
+  created_at: datetime
 
   # ---- Public API -------------------------------------
 
   def __str__(self) -> str:
     """
     This functions returns a string representation of the
-    WeatherHistoricalForecastModel instance.
+    WeatherDataCollectionForecastModel instance.
 
     Returns
     --------------
     str: 
-      The string representation of the WeatherHistoricalForecastModel 
+      The string representation of the WeatherDataCollectionForecastModel 
       instance.
     """
     return (
-      f"---- Weather Historical Forecast Model ----------------\n"
-      f"historical_forecast_data: {self.historical_forecast_data},\n"
-      f"last_updated:             {self.last_updated}\n"
+      f"---- Weather Data Collection Forecast Model ----------------\n"
+      f"lead_days:       {self.lead_days},\n"
+      f"forecast_mean:   {self.forecast_mean},\n"
+      f"forecast_stdev:  {self.forecast_stdev},\n"
+      f"resolution_date: {self.resolution_date},\n"
+      f"created_at:      {self.created_at}\n"
     )
 
 
@@ -74,9 +82,9 @@ class WeatherForecastModel:
     """
     return (
       f"---- Weather Forecast Model ----------------------\n"
-      f"forecast_mean:  {self.forecast_mean},\n"
+      f"forecast_mean:   {self.forecast_mean},\n"
       f"forecast_stdev:  {self.forecast_stdev},\n"
-      f"last_updated:   {self.last_updated}\n"
+      f"last_updated:    {self.last_updated}\n"
     )
   
   
@@ -110,6 +118,7 @@ class WeatherObservationModel:
 class LocationModel:
   city_name: str
   icao_code: str
+  iata_code: str
   timezone: str
   temperature_unit: TemperatureUnit
   latitude: float
@@ -131,6 +140,7 @@ class LocationModel:
       f"---- Location Model -------------------------\n"
       f"city_name:        {self.city_name},\n"
       f"icao_code:        {self.icao_code},\n"
+      f"iata_code:        {self.iata_code},\n"
       f"timezone:         {self.timezone},\n"
       f"temperature_unit: {self.temperature_unit.api_value},\n"
       f"latitude:         {self.latitude},\n"
