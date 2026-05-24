@@ -34,7 +34,7 @@ class WeatherDataCollectorActor(Actor):
     """
     This function initializes the WeatherDataCollectorActor class.
 
-    Parameters:
+    Parameters
     ----------------
     config (WeatherDataCollectorActorConfig): 
       The configuration for the WeatherDataCollectorActor.
@@ -134,7 +134,7 @@ class WeatherDataCollectorActor(Actor):
     """
     This function is called when a weather data collection request is received.
 
-    Parameters:
+    Parameters
     ----------------
     cities (dict[str, LocationModel]): 
       The dictionary of cities for which to collect data.
@@ -151,7 +151,7 @@ class WeatherDataCollectorActor(Actor):
     This function is called when the weather data collection timer 
     expires.
 
-    Parameters:
+    Parameters
     ----------------
     event (TimeEvent):
       The timer event.
@@ -197,7 +197,7 @@ class WeatherDataCollectorActor(Actor):
     """
     This function calculates the start time for the historical data collection timer.
 
-    Returns:
+    Returns
     ----------------
     datetime:
       The start time for the historical data collection in UTC.
@@ -223,7 +223,7 @@ class WeatherDataCollectorActor(Actor):
     This function saves the collected forecast data of a location into the Postgres 
     database.
 
-    Parameters:
+    Parameters
     ----------------
     icao_code (str): 
       The ICAO code of the city for which to save forecast data.
@@ -252,7 +252,7 @@ class WeatherDataCollectorActor(Actor):
     This function saves the collected actual max data of a location into the Postgres 
     database.
 
-    Parameters:
+    Parameters
     ----------------
     icao_code (str): 
       The ICAO code of the city for which to save actual max data.

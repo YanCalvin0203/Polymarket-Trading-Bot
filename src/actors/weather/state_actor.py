@@ -28,7 +28,7 @@ class WeatherStateActor(Actor):
     """
     This function initializes the WeatherStateActor class.
 
-    Parameters:
+    Parameters
     ----------------
     config (WeatherStateActorConfig): 
       The configuration for the WeatherStateActor.

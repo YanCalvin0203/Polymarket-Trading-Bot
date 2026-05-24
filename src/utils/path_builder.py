@@ -1,8 +1,13 @@
-def make_path(module: str, class_name: str, package: str = None, domain: str = None) -> str:
+def make_path(
+  module: str, 
+  class_name: str, 
+  package: str = None, 
+  domain: str = None
+) -> str:
   """
   This method creates a path string for importing a class from a module.
 
-  Parameters:
+  Parameters
   ----------------
   module (str): 
     The module path.
@@ -16,7 +21,7 @@ def make_path(module: str, class_name: str, package: str = None, domain: str = N
   domain (str): 
     The domain of the class, if applicable.
 
-  Returns:
+  Returns
   ----------------
   str: 
     The full path string for importing the class.

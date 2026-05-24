@@ -24,7 +24,7 @@ class WeatherPredictorActor(Actor):
     """
     This function initializes the WeatherPredictorActor class.
 
-    Parameters:
+    Parameters
     ----------------
     config (WeatherPredictorActorConfig): 
       The configuration for the WeatherPredictorActor.

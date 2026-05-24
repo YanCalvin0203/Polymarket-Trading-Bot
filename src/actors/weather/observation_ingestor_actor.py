@@ -24,7 +24,7 @@ class WeatherObservationIngestorActor(Actor):
     """
     This function initializes the WeatherObservationIngestorActor class.
 
-    Parameters:
+    Parameters
     ----------------
     config (WeatherObservationIngestorActorConfig): 
       The configuration for the WeatherObservationIngestorActor.
@@ -90,7 +90,7 @@ class WeatherObservationIngestorActor(Actor):
     """
     This function is called when a weather observations request is received.
 
-    Parameters:
+    Parameters
     ----------------
     manifests (dict[str, WeatherManifestModel]): 
       The manifests requests message.

@@ -1,5 +1,5 @@
 from numpy import sqrt
-from scipy.stats import norm
+from scipy.stats import skewnorm
 from datetime import timezone
 from pandas import Timestamp
 from src.database.weather_adapter import WeatherPostgresAdapter
@@ -46,6 +46,7 @@ class WeatherPredictor:
     """
     forecast_mean = event.forecast.forecast_mean
     forecast_stdev = event.forecast.forecast_stdev
+    forecast_alpha = event.forecast.forecast_alpha
 
     target_date = Timestamp(event.resolution_time).tz_convert(timezone.utc).normalize()
     current_date = Timestamp.now(tz=timezone.utc).normalize()
@@ -59,15 +60,18 @@ class WeatherPredictor:
       if model_params is None:
         mu_calibrated = forecast_mean
         sigma_calibrated = forecast_stdev
+        skewness = forecast_alpha
 
       else:
         mu_calibrated = model_params.a + (model_params.b * forecast_mean)
         variance_calibrated = model_params.c + (model_params.d * (forecast_stdev ** 2))
         sigma_calibrated = sqrt(variance_calibrated)
+        skewness = forecast_alpha
 
     except Exception as e:
       mu_calibrated = forecast_mean
       sigma_calibrated = forecast_stdev
+      skewness = forecast_alpha
 
     execution_time = Timestamp.now(tz=timezone.utc)
     market_predictions = {}
@@ -78,6 +82,7 @@ class WeatherPredictor:
         lead_days=lead_days,
         mu_calibrated=float(mu_calibrated),
         sigma_calibrated=float(sigma_calibrated),
+        skewness=float(skewness),
         execution_time=execution_time
       )
       market_predictions[market_id] = prediction_result_model
@@ -98,6 +103,7 @@ class WeatherPredictor:
     lead_days: int,
     mu_calibrated: float,
     sigma_calibrated: float,
+    skewness: float,
     execution_time: Timestamp
   ) -> WeatherMarketPredictionModel:
     """
@@ -120,6 +126,9 @@ class WeatherPredictor:
     sigma_calibrated (float):
       The calibrated standard deviation for the event's forecast.
 
+    skewness (float):
+      The skewness parameter for the skew normal distribution.
+
     execution_time (Timestamp):
       The timestamp when the prediction is executed.
 
@@ -130,8 +139,8 @@ class WeatherPredictor:
     """
     lower_temperature_bound, upper_temperature_bound = market.bucket_range
 
-    cdf_upper = norm.cdf(upper_temperature_bound, loc=mu_calibrated, scale=sigma_calibrated)
-    cdf_lower = norm.cdf(lower_temperature_bound, loc=mu_calibrated, scale=sigma_calibrated)
+    cdf_upper = skewnorm.cdf(upper_temperature_bound, a=skewness, loc=mu_calibrated, scale=sigma_calibrated)
+    cdf_lower = skewnorm.cdf(lower_temperature_bound, a=skewness, loc=mu_calibrated, scale=sigma_calibrated)
     predicted_probability = cdf_upper - cdf_lower
 
     market_prediction_model = WeatherMarketPredictionModel(

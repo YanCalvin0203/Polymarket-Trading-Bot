@@ -7,7 +7,7 @@ def weather_slug_builder() -> list[str]:
   This function returns a list of slugs for relevant weather
   events on Polymarket.
 
-  Returns:
+  Returns
   ---------------
   list[str]:
     A list of slugs for the specified cities and time range.

@@ -182,6 +182,7 @@ class WeatherParser:
     forecast_model = WeatherForecastModel(
       forecast_mean=0.0,
       forecast_stdev=0.0,
+      forecast_alpha=0.0,
       last_updated=Timestamp.now(tz=timezone.utc)
     )
     observation_model = WeatherObservationModel(

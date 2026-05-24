@@ -18,7 +18,7 @@ class WeatherStrategy(Strategy):
     """
     This function initializes the WeatherStrategy class.
 
-    Parameters:
+    Parameters
     ----------------
     config (WeatherStrategyConfig): 
       The configuration for the WeatherStrategy.

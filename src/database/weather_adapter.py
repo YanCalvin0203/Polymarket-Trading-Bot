@@ -53,6 +53,7 @@ class WeatherPostgresAdapter:
       Column("resolution_date", DateTime(timezone=True), primary_key=True, nullable=False),
       Column("ensemble_mean", Float),
       Column("ensemble_stdev", Float),
+      Column("ensemble_alpha", Float),
       Column("actual_max", Float),
     )
 
@@ -72,7 +73,7 @@ class WeatherPostgresAdapter:
       Column("param_a", Float, nullable=False),
       Column("param_b", Float, nullable=False),
       Column("param_c", Float, nullable=False),
-      Column("param_d", Float, nullable=False),
+      Column("param_d", Float, nullable=False)
     )
 
     self._create_schema_if_not_exists()
@@ -88,7 +89,7 @@ class WeatherPostgresAdapter:
     """
     This function saves the weather forecast data to the Postgres database.
 
-    Parameters:
+    Parameters
     ----------------
     icao_code (str): 
       The ICAO code of the city for which the weather data is being saved.
@@ -109,6 +110,7 @@ class WeatherPostgresAdapter:
           "resolution_date": forecast_data.resolution_date,
           "ensemble_mean": float(forecast_data.ensemble_mean),
           "ensemble_stdev": float(forecast_data.ensemble_stdev),
+          "ensemble_alpha": float(forecast_data.ensemble_alpha),
         }
       )
     
@@ -119,6 +121,7 @@ class WeatherPostgresAdapter:
         "timestamp": insert_statement.excluded.timestamp,
         "ensemble_mean": insert_statement.excluded.ensemble_mean,
         "ensemble_stdev": insert_statement.excluded.ensemble_stdev,
+        "ensemble_alpha": insert_statement.excluded.ensemble_alpha,
       }
     )
     
@@ -133,7 +136,7 @@ class WeatherPostgresAdapter:
     """
     This function saves the actual max weather data to the Postgres database.
 
-    Parameters:
+    Parameters
     ----------------
     icao_code (str): 
       The ICAO code of the city for which the weather data is being saved.
@@ -175,7 +178,7 @@ class WeatherPostgresAdapter:
     """
     This function saves the calibrated model parameters to the Postgres database.
 
-    Parameters:
+    Parameters
     ----------------
     params_list (list[WeatherCalibrationParamsModel]): 
       The calibrated model parameters to be saved.
@@ -221,7 +224,7 @@ class WeatherPostgresAdapter:
     This function loads the weather data from the Postgres database for a given
     ICAO code and lookback period.
 
-    Parameters:
+    Parameters
     ----------------
     icao_code (str): 
       The ICAO code of the city for which to load the weather data.
@@ -229,7 +232,7 @@ class WeatherPostgresAdapter:
     lookback_days (int): 
       The number of days to look back for the weather data.
 
-    Returns:
+    Returns
     ----------------
     DataFrame:
       A DataFrame containing the weather data for the specified ICAO code and lookback 
@@ -241,6 +244,7 @@ class WeatherPostgresAdapter:
       self.weather_data_table.c.resolution_date >= cutoff_date,
       self.weather_data_table.c.ensemble_mean.is_not(None),
       self.weather_data_table.c.ensemble_stdev.is_not(None),
+      self.weather_data_table.c.ensemble_alpha.is_not(None),
       self.weather_data_table.c.actual_max.is_not(None)
     )
 
@@ -260,7 +264,7 @@ class WeatherPostgresAdapter:
     This function loads the calibrated model parameters from the Postgres database for a 
     given ICAO code.
 
-    Parameters:
+    Parameters
     ----------------
     icao_code (str): 
       The ICAO code of the city for which to load the model parameters.
@@ -268,7 +272,7 @@ class WeatherPostgresAdapter:
     lead_days (int): 
       The number of days into the future for which to load the model parameters.
 
-    Returns:
+    Returns
     ----------------
     WeatherCalibrationParamsModel | None:
       The loaded model parameters for the specified ICAO code, or None if no parameters 

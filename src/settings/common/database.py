@@ -44,12 +44,12 @@ class DatabaseConfig(BaseSettings):
     """
     This function returns the connection string for the Postgres database.
 
-    Parameters:
+    Parameters
     ----------------
     database_name (str):
       The name of the database to connect to.
 
-    Returns:
+    Returns
     ----------------
     str: The connection string for the Postgres database.
     """

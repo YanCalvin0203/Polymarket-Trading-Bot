@@ -52,6 +52,7 @@ class WeatherEventModel:
       f"resolution_source:    {self.resolution_source})\n"
       f"forecast_mean:        {self.forecast.forecast_mean},\n"
       f"forecast_stdev:       {self.forecast.forecast_stdev},\n"
+      f"forecast_alpha:       {self.forecast.forecast_alpha},\n"
       f"last_updated:         {self.forecast.last_updated}\n"
       f"observation_current:  {self.observation.observation_current},\n"
       f"observation_max:      {self.observation.observation_max},\n"

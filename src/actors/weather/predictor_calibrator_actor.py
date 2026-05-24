@@ -29,7 +29,7 @@ class WeatherPredictorCalibratorActor(Actor):
     """
     This function initializes the WeatherPredictorCalibratorActor class.
 
-    Parameters:
+    Parameters
     ----------------
     config (WeatherPredictorCalibratorActorConfig): 
       The configuration for the WeatherPredictorCalibratorActor.
@@ -68,7 +68,7 @@ class WeatherPredictorCalibratorActor(Actor):
     self.clock.set_timer(
       name=WeatherTimer.WEATHER_MODEL_CALIBRATION_TIMER.value,
       start_time=self._calculate_start_time(),
-      interval=Timedelta(days=settings.WEATHER_CALIBRATOR_SETTINGS.DATA_CALIBRATION_INTERVAL_DAYS),
+      interval=Timedelta(days=settings.WEATHER_CALIBRATOR_SETTINGS.CALIBRATION_INTERVAL_DAYS),
       callback=self._on_model_calibration_timer,
       fire_immediately=True
     )
@@ -123,7 +123,7 @@ class WeatherPredictorCalibratorActor(Actor):
     """
     This function is called when a weather model calibration request is received.
 
-    Parameters:
+    Parameters
     ----------------
     cities (dict[str, LocationModel]): 
       The dictionary of cities for which to calibrate the model.
@@ -134,13 +134,14 @@ class WeatherPredictorCalibratorActor(Actor):
     )
 
     self.cities = cities
+    self._on_model_calibration_timer(None)
 
   def _on_model_calibration_timer(self, event: TimeEvent) -> None:
     """
     This function is called when the weather model calibration timer 
     expires.
 
-    Parameters:
+    Parameters
     ----------------
     event (TimeEvent):
       The timer event.
@@ -156,7 +157,7 @@ class WeatherPredictorCalibratorActor(Actor):
       try:
         city_calibration_data = self.database_adapter.load_weather_data(
           icao_code=icao_code,
-          lookback_days=settings.WEATHER_CALIBRATOR_SETTINGS.DATA_CALIBRATION_LOOKBACK_DAYS
+          lookback_days=settings.WEATHER_CALIBRATOR_SETTINGS.CALIBRATION_LOOKBACK_DAYS
         )
         calibration_data[icao_code] = city_calibration_data
 
@@ -215,13 +216,13 @@ class WeatherPredictorCalibratorActor(Actor):
     """
     This function calculates the start time for the model calibration timer.
 
-    Returns:
+    Returns
     ----------------
     datetime:
       The start time for the model calibration in UTC.
     """
-    target_hour = settings.WEATHER_CALIBRATOR_SETTINGS.DATA_CALIBRATION_TARGET_HOUR
-    target_day = settings.WEATHER_CALIBRATOR_SETTINGS.DATA_CALIBRATION_TARGET_DAY
+    target_hour = settings.WEATHER_CALIBRATOR_SETTINGS.CALIBRATION_TARGET_HOUR
+    target_day = settings.WEATHER_CALIBRATOR_SETTINGS.CALIBRATION_TARGET_DAY
 
     current_time_local = Timestamp.now(tz="Asia/Kuala_Lumpur")
     start_time_local = current_time_local.normalize() + Timedelta(hours=target_hour)

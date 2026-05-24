@@ -89,6 +89,7 @@ class WeatherDataCollectionForecastModel:
   lead_days: int
   ensemble_mean: float
   ensemble_stdev: float
+  ensemble_alpha: float
   resolution_date: datetime
   created_at: datetime
 
@@ -110,6 +111,7 @@ class WeatherDataCollectionForecastModel:
       f"lead_days:       {self.lead_days},\n"
       f"ensemble_mean:   {self.ensemble_mean},\n"
       f"ensemble_stdev:  {self.ensemble_stdev},\n"
+      f"ensemble_alpha:  {self.ensemble_alpha},\n"
       f"resolution_date: {self.resolution_date},\n"
       f"created_at:      {self.created_at}\n"
     )
@@ -119,6 +121,7 @@ class WeatherDataCollectionForecastModel:
 class WeatherForecastModel:
   forecast_mean: float
   forecast_stdev: float
+  forecast_alpha: float
   last_updated: datetime
 
   # ---- Public API -------------------------------------
@@ -137,6 +140,7 @@ class WeatherForecastModel:
       f"---- Weather Forecast Model ----------------------\n"
       f"forecast_mean:   {self.forecast_mean},\n"
       f"forecast_stdev:  {self.forecast_stdev},\n"
+      f"forecast_alpha:  {self.forecast_alpha},\n"
       f"last_updated:    {self.last_updated}\n"
     )
   

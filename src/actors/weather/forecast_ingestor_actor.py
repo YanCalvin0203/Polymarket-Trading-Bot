@@ -24,7 +24,7 @@ class WeatherForecastIngestorActor(Actor):
     """
     This function initializes the WeatherForecastIngestorActor class.
 
-    Parameters:
+    Parameters
     ----------------
     config (WeatherForecastIngestorActorConfig): 
       The configuration for the WeatherForecastIngestorActor.
@@ -90,7 +90,7 @@ class WeatherForecastIngestorActor(Actor):
     """
     This function is called when a weather forecasts request is received.
 
-    Parameters:
+    Parameters
     ----------------
     manifests (dict[str, WeatherManifestModel]): 
       The manifests requests message.

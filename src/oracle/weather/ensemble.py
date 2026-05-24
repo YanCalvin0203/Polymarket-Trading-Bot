@@ -7,10 +7,11 @@ from openmeteo_requests import Client
 from openmeteo_sdk.WeatherApiResponse import WeatherApiResponse
 from numpy import array
 from pandas import DataFrame, Timestamp, Timedelta, date_range, to_datetime
+from scipy.stats import skew
+from src.utils.statistics import convert_skew_to_alpha
 from src.settings import settings
 from src.models.weather import (
   WeatherDataCollectionForecastModel,
-  WeatherDataCollectionActualMaxModel,
   WeatherForecastModel,
   WeatherManifestModel,
   LocationModel
@@ -127,13 +128,14 @@ class WeatherEnsemble:
       if not response:
         return None
       
-      forecast_mean, forecast_stdev = self._get_forecast_stats(
+      forecast_mean, forecast_stdev, forecast_alpha = self._get_forecast_stats(
         response=response,
         location=manifest.location
       )
       forecast_model = WeatherForecastModel(
         forecast_mean=forecast_mean,
         forecast_stdev=forecast_stdev,
+        forecast_alpha=forecast_alpha,
         last_updated=Timestamp.now(tz=timezone.utc)
       )
       return forecast_model
@@ -193,6 +195,7 @@ class WeatherEnsemble:
           lead_days=lead_day,
           ensemble_mean=row["ensemble_mean"],
           ensemble_stdev=row["ensemble_stdev"],
+          ensemble_alpha=row["ensemble_alpha"],
           resolution_date=target_date,
           created_at=Timestamp.now(tz=timezone.utc)
         )
@@ -279,7 +282,7 @@ class WeatherEnsemble:
     self, 
     response: WeatherApiResponse, 
     location: LocationModel
-  ) -> tuple[float, float]:
+  ) -> tuple[float, float, float]:
     """
     This function calculates forecast statistics from the raw API response.
 
@@ -293,8 +296,8 @@ class WeatherEnsemble:
 
     Returns
     --------------
-    tuple[float, float]: 
-      The mean and standard deviation of the forecast temperatures.
+    tuple[float, float, float]: 
+      The mean, standard deviation, and skewness of the forecast temperatures.
     """
     hourly = response.Hourly()
 
@@ -319,10 +322,13 @@ class WeatherEnsemble:
     )
     max_temp_df = df.max(axis=0)
 
+    sample_skew = float(skew(max_temp_df.to_numpy(), bias=False))
+
     forecast_mean = float(max_temp_df.mean())
     forecast_stdev = float(max_temp_df.std())
+    forecast_alpha = convert_skew_to_alpha(sample_skew)
 
-    return forecast_mean, forecast_stdev
+    return forecast_mean, forecast_stdev, forecast_alpha
   
   def _get_data_collection_forecast_df(
     self,
@@ -377,5 +383,9 @@ class WeatherEnsemble:
     summary_df = DataFrame(index=daily_member_max_df.index)
     summary_df["ensemble_mean"] = daily_member_max_df.mean(axis=1)
     summary_df["ensemble_stdev"] = daily_member_max_df.std(axis=1)
+    summary_df["ensemble_alpha"] = daily_member_max_df.apply(
+      lambda row: convert_skew_to_alpha(float(skew(row.to_numpy(), bias=False))),
+      axis=1
+    )
 
     return summary_df
