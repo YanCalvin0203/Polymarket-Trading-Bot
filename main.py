@@ -3,6 +3,8 @@ from nautilus_trader.live.node import TradingNode
 from nautilus_trader.live.config import TradingNodeConfig
 from nautilus_trader.trading.config import ImportableStrategyConfig
 from nautilus_trader.common.config import ImportableActorConfig
+from nautilus_trader.live.config import LiveRiskEngineConfig
+from nautilus_trader.portfolio.config import PortfolioConfig
 from nautilus_trader.adapters.polymarket.config import (
   PolymarketDataClientConfig,
   PolymarketExecClientConfig,
@@ -22,6 +24,25 @@ def main() -> None:
   """
   # Load the env variables from the .env file
   settings.NODE_CONFIG.inject_to_env()
+
+
+  # ---- Portfolio Configuration ---------------------
+
+  portfolio_config = PortfolioConfig(
+    use_mark_prices=True,
+  )
+
+
+  # ---- Risk Engine Configuration -------------------
+
+  risk_engine_config = LiveRiskEngineConfig(
+    bypass=False,
+    max_order_submit_rate="5/00:00:01",
+    max_order_modify_rate="2/00:00:01",
+    max_notional_per_order={},
+    graceful_shutdown_on_exception=True,
+  )
+
 
   # ---- Instrument Provider Configurations ----------
 
@@ -92,6 +113,8 @@ def main() -> None:
   node_config = TradingNodeConfig(
     trader_id=settings.NODE_CONFIG.TRADER_ID,
     environment=settings.NODE_CONFIG.ENVIRONMENT,
+    portfolio=portfolio_config,
+    risk_engine=risk_engine_config,
     data_clients={
       settings.NODE_CONFIG.WEATHER_CLIENT_NAME: weather_data_client_config
     },

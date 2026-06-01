@@ -60,3 +60,13 @@ class WeatherEndpoint(Enum):
     module="WeatherStateActor",
     class_name="on_prediction_update"
   )
+
+  WEATHER_STRATEGY_STATUS = make_path(
+    module="WeatherStateActor",
+    class_name="on_strategy_status"
+  )
+
+  WEATHER_STRATEGY_EVALUATE = make_path(
+    module="WeatherStrategy",
+    class_name="on_evaluate"
+  )

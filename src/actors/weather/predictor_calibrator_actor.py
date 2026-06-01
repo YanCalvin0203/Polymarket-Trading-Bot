@@ -181,6 +181,7 @@ class WeatherPredictorCalibratorActor(Actor):
           params = self.calibrator.calibrate_model_for_city(
             icao_code=icao_code,
             lead_days=lead_days,
+            temperature_unit=self.cities[icao_code].temperature_unit,
             calibration_data=grouped_city_calibration_data
           )
           calibrated_params[(icao_code, lead_days)] = params
